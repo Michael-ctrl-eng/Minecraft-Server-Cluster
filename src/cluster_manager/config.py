@@ -1,6 +1,6 @@
 import yaml
 import os
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, validator
 
 class RedisConfig(BaseModel):
     host: str = "localhost"
@@ -16,12 +16,22 @@ class LoggingConfig(BaseModel):
     format: str = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
     file: str = None
 
+class AWSConfig(BaseModel):
+    region: str = None
+    access_key_id: str = None
+    secret_access_key: str = None
+
+    @validator("access_key_id", "secret_access_key", always=True)
+    def check_aws_credentials(cls, v, values, **kwargs):
+        if values.get("region") and not v:
+            raise ValueError("AWS access key ID and secret access key are required when region is set")
+        return v
+
 class AppConfig(BaseModel):
     redis: RedisConfig = RedisConfig()
     scaling: ScalingConfig = ScalingConfig()
     logging: LoggingConfig = LoggingConfig()
-    # Add AWS settings later:
-    # aws: AWSConfig = AWSConfig()
+    aws: AWSConfig = AWSConfig()
 
 def load_config(config_file: str = "config.yaml") -> AppConfig:
     """Loads the application configuration from a YAML file and environment variables."""
