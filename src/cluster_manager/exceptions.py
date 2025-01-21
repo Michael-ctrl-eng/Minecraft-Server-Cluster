@@ -9,3 +9,11 @@ class ServerStartError(Exception):
 class ServerStopError(Exception):
     """Raised when there is an error stopping a server."""
     pass
+
+class ServerNotFoundError(Exception):
+    """Raised when a server with the given ID is not found."""
+    pass
+
+class ConfigError(Exception):
+    """Raised when there is an error with the configuration."""
+    pass
