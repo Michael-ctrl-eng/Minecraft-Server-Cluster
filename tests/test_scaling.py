@@ -1,6 +1,5 @@
 import pytest
-from src.cluster_manager.scaling import scale_servers
-
+from src.cluster_manager.scaling import scale_servers # Or whatever you are importing
 @pytest.mark.parametrize("cpu_usage, expected", [
     (85, "🚀"),
     (15, "🛑"),
