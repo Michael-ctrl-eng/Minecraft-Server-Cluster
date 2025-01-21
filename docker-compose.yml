@@ -1,36 +1,86 @@
 version: '3.8'
 
 services:
+  # BungeeCord Proxy Service
   bungeecord:
-    image: itzg/bungeecord:latest
+    image: itzg/bungeecord:1.20.2  # Pinned version
+    container_name: bungeecord
     ports:
-      - "25565:25565"
+      - "25565:25565"  # Main Minecraft port
     environment:
-      BUNGEE_VERSION: "1.20"
+      BUNGEE_VERSION: "1.20.2"
+      BUNGEE_IP_WHITELIST: "true"
     volumes:
       - ./bungee:/server
     depends_on:
       - lobby
       - minigame1
+    networks:
+      - mc-network
 
+  # Lobby Server
   lobby:
-    image: itzg/minecraft-server:latest
+    image: itzg/minecraft-server:2023.10.0  # Pinned version
+    container_name: lobby-server
     ports:
-      - "25566:25565"
+      - "25566:25565"  # Internal mapping
     environment:
       EULA: "TRUE"
-      TYPE: "SPIGOT"
-      SPIGOT_VERSION: "1.20.1"
+      TYPE: "PAPER"
+      VERSION: "1.20.1"
+      MEMORY: "2G"
     volumes:
       - ./lobby:/data
+    networks:
+      - mc-network
 
+  # Minigame Server 1
   minigame1:
-    image: itzg/minecraft-server:latest
+    image: itzg/minecraft-server:2023.10.0  # Pinned version
+    container_name: minigame1-server
     ports:
-      - "25567:25565"
+      - "25567:25565"  # Internal mapping
     environment:
       EULA: "TRUE"
-      TYPE: "SPIGOT"
-      SPIGOT_VERSION: "1.20.1"
+      TYPE: "PAPER"
+      VERSION: "1.20.1"
+      MEMORY: "2G"
     volumes:
       - ./minigame1:/data
+    networks:
+      - mc-network
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0.34  # Pinned version
+    container_name: mc-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: minecraft
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - mc-network
+    ports:
+      - "3306:3306"
+
+  # Redis Cache
+  redis:
+    image: redis:7.0.12-alpine  # Pinned version
+    container_name: mc-redis
+    networks:
+      - mc-network
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+# Network Configuration
+networks:
+  mc-network:
+    driver: bridge
+
+# Persistent Volume Storage
+volumes:
+  mysql-data:
+  redis-data:
