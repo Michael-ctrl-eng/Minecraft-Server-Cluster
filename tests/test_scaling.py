@@ -4,10 +4,9 @@ import redis
 from src.cluster_manager.scaling import (
     scale_servers,
     get_servers_to_scale,
-    MAX_SERVERS,
-    MIN_SERVERS,
 )
-from src.cluster_manager.exceptions import ScalingError  # Assuming you create custom exceptions
+from src.cluster_manager.exceptions import ScalingError
+from src.cluster_manager.config import config
 
 @mock.patch("src.cluster_manager.scaling.r")
 class TestScaleServers:
@@ -26,14 +25,15 @@ class TestScaleServers:
 
     def test_scale_servers_up_to_limit(self, mock_redis):
         with pytest.raises(ScalingError):
-            scale_servers(MAX_SERVERS + 1)
+            scale_servers(config.scaling.max_servers + 1)
 
     def test_scale_servers_down_below_min(self, mock_redis):
+        mock_redis.get.return_value = b"2"  # Current servers
         with pytest.raises(ScalingError):
-            scale_servers(MIN_SERVERS - 1)
+            scale_servers(config.scaling.min_servers - 3)
 
     def test_scale_servers_invalid_input(self, mock_redis):
-        with pytest.raises(TypeError):
+        with pytest.raises(ScalingError):
             scale_servers("abc")
 
     def test_scale_servers_redis_timeout_error(self, mock_redis):
@@ -80,5 +80,5 @@ class TestGetServersToScale:
 
     def test_get_servers_to_scale_non_integer(self, mock_redis):
         mock_redis.get.return_value = b"abc"
-        with pytest.raises(ValueError):
+        with pytest.raises(ScalingError):
             get_servers_to_scale()
