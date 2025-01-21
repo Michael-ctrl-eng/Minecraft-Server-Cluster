@@ -1,0 +1,19 @@
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+
+scaling:
+  max_servers: 10
+  min_servers: 0
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+  file: "app.log" # Optional: Log to a file
+
+# Example AWS settings (for later)
+# aws:
+#   region: "us-east-1"
+#   access_key_id: "YOUR_ACCESS_KEY"
+#   secret_access_key: "YOUR_SECRET_KEY"
