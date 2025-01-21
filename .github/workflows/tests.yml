@@ -25,14 +25,14 @@ jobs:
           pip install pytest
           pip install redis mock
 
-      - name: Debug: Print GITHUB_WORKSPACE # <--- ADD THIS DEBUG STEP
+      - name: Debug: Print GITHUB_WORKSPACE
         run: echo "GITHUB_WORKSPACE is: ${{ github.workspace }}"
 
-      - name: Set PYTHONPATH
+      - name: Set PYTHONPATH  # <--- THIS IS THE IMPORTANT PART
         run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
 
       - name: Run tests (no AWS)
-        working-directory: ${{ github.workspace }}
+        working-directory: ${{ github.workspace }} # <--- ALSO IMPORTANT
         env:
           REDIS_HOST: "localhost"
           REDIS_PORT: "6379"
