@@ -1,2 +1,13 @@
-# Minecraft-Server-Cluster
-A scalable Minecraft server network architecture designed for high-traffic environments (2,000+ concurrent players). Features AWS auto-scaling, Redis caching, and BungeeCord load balancing.
+# Minecraft Server Cluster  
+**A robot that helps 2,000+ players play together!**  
+
+## How It Works 🔧  
+- Automatically adds new servers when too many players join.  
+- Connects Bedrock + Java players.  
+- Blocks cheaters!  
+
+## Setup (Easy Mode)  
+1. Install [Docker](https://www.docker.com/).  
+2. Copy-paste this command:  
+   ```bash
+   docker-compose up -d
