@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-from src.cluster_manager.config import load_config, AppConfig
+from src.cluster_manager.config import load_config
 from src.cluster_manager.scaling import scale_servers, get_servers_to_scale
 from src.cluster_manager.server_manager import (
     start_server,
@@ -35,6 +35,9 @@ def main():
 
     # Status command
     status_parser = subparsers.add_parser("status", help="Get server status")
+    status_parser.add_argument(
+        "server_id", type=int, help="ID of the server"
+    )
 
     # Start command
     start_parser = subparsers.add_parser("start", help="Start a server")
@@ -54,8 +57,21 @@ def main():
             logging.error(f"Error scaling servers: {e}")
     elif args.command == "status":
         try:
-            num_servers = get_servers_to_scale()
-            print(f"Number of servers to scale: {num_servers}")
+            if 'server_id' in args:
+                # Get status of a specific server
+                try:
+                    status = get_server_status(args.server_id)
+                    print(f"Server {args.server_id} status: {status}")
+                except ServerNotFoundError:
+                    print(f"Server {args.server_id} not found.")
+            else:
+                # Get the general scaling status
+                try:
+                    num_servers = get_servers_to_scale()
+                    print(f"Number of servers to scale: {num_servers}")
+                except ScalingError as e:
+                    logging.error(f"Error getting scaling status: {e}")
+
         except ScalingError as e:
             logging.error(f"Error getting server status: {e}")
     elif args.command == "start":
