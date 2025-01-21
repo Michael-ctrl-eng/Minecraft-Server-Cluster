@@ -1,8 +1,8 @@
 import logging
 import subprocess
 import time
-from pydantic import BaseModel, validator
 import redis
+from pydantic import BaseModel, validator
 
 from src.cluster_manager.config import load_config
 from src.cluster_manager.exceptions import (
@@ -12,15 +12,15 @@ from src.cluster_manager.exceptions import (
 )
 
 config = load_config()
-r = redis.Redis(
-    host=config.redis.host, port=config.redis.port, db=config.redis.db
-)
+r = redis.Redis(host=config.redis.host, port=config.redis.port, db=config.redis.db)
 
 logger = logging.getLogger(__name__)
 
 class Server(BaseModel):
     server_id: int
     status: str = "stopped"
+    instance_id: str = None  # For AWS integration later
+    ip_address: str = None # To store the IP address
 
     def start(self):
         """Starts the server."""
@@ -35,23 +35,16 @@ class Server(BaseModel):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            stdout, stderr = process.communicate()
-
-            if process.returncode != 0:
-                logger.error(
-                    f"Error starting server {self.server_id}: {stderr.decode()}"
-                )
-                raise ServerStartError(
-                    f"Failed to start server {self.server_id}: {stderr.decode()}"
-                )
-
+            # Wait for the process to start (adjust timeout as needed)
+            time.sleep(5)
+            # Update status
             self.status = "running"
             update_server_registry(self)
             logger.info(f"Server {self.server_id} started successfully")
 
         except Exception as e:
             logger.error(f"An error occurred while starting server {self.server_id}: {e}")
-            raise ServerStartError(f"Failed to start server {self.server_id}: {e}")
+            raise ServerStartError(f"Failed to start server {self.server_id}: {e}") from e
 
     def stop(self):
         """Stops the server."""
@@ -66,15 +59,9 @@ class Server(BaseModel):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            stdout, stderr = process.communicate()
 
-            if process.returncode != 0:
-                logger.error(
-                    f"Error stopping server {self.server_id}: {stderr.decode()}"
-                )
-                raise ServerStopError(
-                    f"Failed to stop server {self.server_id}: {stderr.decode()}"
-                )
+            # Wait for the process to stop (adjust timeout as needed)
+            time.sleep(5)
 
             self.status = "stopped"
             update_server_registry(self)
@@ -82,10 +69,13 @@ class Server(BaseModel):
 
         except Exception as e:
             logger.error(f"An error occurred while stopping server {self.server_id}: {e}")
-            raise ServerStopError(f"Failed to stop server {self.server_id}: {e}")
-
+            raise ServerStopError(f"Failed to stop server {self.server_id}: {e}") from e
+    
     def get_status(self):
         """Gets the current status of the server."""
+        if self.status == "running":
+            # Optionally ping the server to confirm it's still up
+            pass
         return self.status
 
 def get_server(server_id: int) -> Server:
@@ -107,11 +97,17 @@ def get_server(server_id: int) -> Server:
     return Server(
         server_id=server_id,
         status=server_data[b"status"].decode(),
+        instance_id=server_data.get(b"instance_id", b"").decode() or None,
+        ip_address=server_data.get(b"ip_address", b"").decode() or None,
     )
 
 def update_server_registry(server: Server):
     """Updates the server registry with the current server status."""
-    r.hset(f"server:{server.server_id}", "status", server.status)
+    r.hset(f"server:{server.server_id}", mapping={
+        "status": server.status,
+        "instance_id": server.instance_id or "",
+        "ip_address": server.ip_address or "",
+    })
 
 def start_server(server_id: int):
     """Starts a server.
