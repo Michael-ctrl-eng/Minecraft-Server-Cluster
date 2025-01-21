@@ -10,10 +10,10 @@ scaling:
 logging:
   level: "INFO"
   format: "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-  file: "app.log" # Optional: Log to a file
+  file: "app.log"
 
-# Example AWS settings (for later)
+# AWS (Optional - Fill in your details later)
 # aws:
-#   region: "us-east-1"
-#   access_key_id: "YOUR_ACCESS_KEY"
-#   secret_access_key: "YOUR_SECRET_KEY"
+#   region: "your-aws-region"
+#   access_key_id: "YOUR_ACCESS_KEY_ID" # Do NOT store in config, use environment variables
+#   secret_access_key: "YOUR_SECRET_ACCESS_KEY" # Do NOT store in config, use environment variables
