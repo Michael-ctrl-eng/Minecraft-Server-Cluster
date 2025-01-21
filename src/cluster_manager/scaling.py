@@ -26,7 +26,7 @@ def scale_servers(num_servers: int):
     """Scales the number of Minecraft servers up or down.
 
     Args:
-        num_servers: The number of servers to add (positive) or remove (negative).
+        num_servers: The number of servers to add (remove if negative).
 
     Raises:
         ScalingError: If there is an error scaling the servers.
