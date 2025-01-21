@@ -1,29 +1,23 @@
 version: '3.8'
 
 services:
-  # BungeeCord Proxy Service
   bungeecord:
-    image: itzg/bungeecord:1.20.2  # Pinned version
-    container_name: bungeecord
+    image: itzg/bungeecord:1.20.2
+    container_name: bungeecord-proxy
     ports:
-      - "25565:25565"  # Main Minecraft port
+      - "25565:25565"
     environment:
       BUNGEE_VERSION: "1.20.2"
-      BUNGEE_IP_WHITELIST: "true"
     volumes:
       - ./bungee:/server
-    depends_on:
-      - lobby
-      - minigame1
     networks:
       - mc-network
 
-  # Lobby Server
   lobby:
-    image: itzg/minecraft-server:2023.10.0  # Pinned version
+    image: itzg/minecraft-server:2023.10.0
     container_name: lobby-server
     ports:
-      - "25566:25565"  # Internal mapping
+      - "25566:25565"
     environment:
       EULA: "TRUE"
       TYPE: "PAPER"
@@ -34,12 +28,11 @@ services:
     networks:
       - mc-network
 
-  # Minigame Server 1
   minigame1:
-    image: itzg/minecraft-server:2023.10.0  # Pinned version
+    image: itzg/minecraft-server:2023.10.0
     container_name: minigame1-server
     ports:
-      - "25567:25565"  # Internal mapping
+      - "25567:25565"
     environment:
       EULA: "TRUE"
       TYPE: "PAPER"
@@ -50,9 +43,8 @@ services:
     networks:
       - mc-network
 
-  # MySQL Database
   mysql:
-    image: mysql:8.0.34  # Pinned version
+    image: mysql:8.0.34
     container_name: mc-mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -61,26 +53,19 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - mc-network
-    ports:
-      - "3306:3306"
 
-  # Redis Cache
   redis:
-    image: redis:7.0.12-alpine  # Pinned version
+    image: redis:7.0.12-alpine
     container_name: mc-redis
     networks:
       - mc-network
-    ports:
-      - "6379:6379"
     volumes:
       - redis-data:/data
 
-# Network Configuration
 networks:
   mc-network:
     driver: bridge
 
-# Persistent Volume Storage
 volumes:
   mysql-data:
   redis-data:
