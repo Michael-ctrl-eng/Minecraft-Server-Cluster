@@ -1,9 +1,10 @@
-name: Run Tests  
+name: CI/CD Pipeline  
 on: [push]  
 
 jobs:  
   test:  
     runs-on: ubuntu-latest  
+
     steps:  
       - name: Checkout code  
         uses: actions/checkout@v4  
@@ -14,7 +15,8 @@ jobs:
           python-version: "3.9"  
 
       - name: Install dependencies  
-        run: pip install -r requirements.txt  
+        run: |  
+          pip install -r requirements.txt  
 
       - name: Run tests  
         run: pytest tests/ -v  
