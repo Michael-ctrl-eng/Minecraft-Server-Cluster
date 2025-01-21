@@ -1,12 +1,11 @@
-import pytest  
-from src.cluster_manager.scaling import scale_servers  
+import pytest
+from src.cluster_manager.scaling import scale_servers
 
-def test_scale_up():  
-    # Test if scaling up works  
-    result = scale_servers(85)  
-    assert "🚀" in result  
-
-def test_scale_down():  
-    # Test if scaling down works  
-    result = scale_servers(15)  
-    assert "🛑" in result  
+@pytest.mark.parametrize("cpu_usage, expected", [
+    (85, "🚀"),
+    (15, "🛑"),
+    (50, "⚖️")
+])
+def test_scaling(cpu_usage, expected):
+    result = scale_servers(cpu_usage)
+    assert expected in result, f"Expected {expected} in response"
