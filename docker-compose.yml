@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  bungeecord:
+    image: itzg/bungeecord:latest
+    ports:
+      - "25565:25565"
+    environment:
+      BUNGEE_VERSION: "1.20"
+    volumes:
+      - ./bungee:/server
+    depends_on:
+      - lobby
+      - minigame1
+
+  lobby:
+    image: itzg/minecraft-server:latest
+    ports:
+      - "25566:25565"
+    environment:
+      EULA: "TRUE"
+      TYPE: "SPIGOT"
+      SPIGOT_VERSION: "1.20.1"
+    volumes:
+      - ./lobby:/data
+
+  minigame1:
+    image: itzg/minecraft-server:latest
+    ports:
+      - "25567:25565"
+    environment:
+      EULA: "TRUE"
+      TYPE: "SPIGOT"
+      SPIGOT_VERSION: "1.20.1"
+    volumes:
+      - ./minigame1:/data
