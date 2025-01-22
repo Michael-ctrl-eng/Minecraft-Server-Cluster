@@ -64,9 +64,3 @@ backup_enabled: true
 backup_location: "/mnt/backup/minecraft"  # Or s3://your-bucket-name
 restic_password: "{{ vault_restic_password }}" # Encrypted with Ansible Vault
 restic_repository: "{{ backup_location }}"
-
-# Monitoring Variables (Prometheus and Grafana)
-prometheus_version: "2.45.0"
-grafana_version: "9.5.2"
-node_exporter_version: "1.5.0"
-grafana_admin_password: "{{ vault_grafana_admin_password }}"
