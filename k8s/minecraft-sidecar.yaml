@@ -1,0 +1,49 @@
+apiVersion: apps/v1  
+kind: Deployment  
+metadata:  
+  name: minecraft  
+spec:  
+  template:  
+    spec:  
+      containers:  
+      - name: minecraft-server  
+        image: itzg/minecraft-server  
+        volumeMounts:  
+        - name: logs  
+          mountPath: /data/logs  
+      - name: metrics-exporter  # Sidecar container  
+        image: python:3.9  
+        command: ["/bin/sh", "-c"]  
+        args:  
+          - |  
+            pip install prometheus-client;  
+            echo '  
+            import time  
+            from prometheus_client import start_http_server, Gauge  
+            import os  
+
+            players = Gauge("minecraft_players_online", "Active players")  
+            LOG_FILE = "/data/logs/latest.log"  
+
+            def parse_logs():  
+                try:  
+                    with open(LOG_FILE, "r") as f:  
+                        lines = f.readlines()  
+                        for line in reversed(lines):  
+                            if "joined the game" in line:  
+                                return int(line.split(" ")[3])  
+                except Exception as e:  
+                    print(f"Error reading logs: {e}")  
+                return 0  
+
+            start_http_server(8000)  
+            while True:  
+                players.set(parse_logs())  
+                time.sleep(10)  
+            ' > exporter.py && python exporter.py  
+        volumeMounts:  
+        - name: logs  
+          mountPath: /data/logs  
+      volumes:  
+      - name: logs  
+        emptyDir: {}  
