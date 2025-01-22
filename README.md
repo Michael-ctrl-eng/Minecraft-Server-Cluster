@@ -1,28 +1,24 @@
-Minecraft Server Cluster on Kubernetes & Docker
-A production-grade, auto-scaling Minecraft cluster with monitoring, backups, and security best practices.
+Minecraft Server Cluster
+Deploy Minecraft servers with Docker Compose or Kubernetes. Supports basic scaling, backups, and monitoring.
 
-Architecture Diagram Example Architecture: Kubernetes + Prometheus + Nginx
+Docker+Kubernetes
 
-⭐ Features
-Auto-Scaling: Dynamically scale servers based on real-time player count.
+📦 Features
+Docker Compose Setup: Spin up Minecraft servers, Nginx load balancer, and Prometheus/Grafana locally.
 
-Zero Downtime: Load balancing via Nginx (Docker) or Kubernetes Ingress (Kubernetes).
+Kubernetes Deployment: Deploy servers to a cluster with Horizontal Pod Autoscaling (HPA) based on CPU usage.
 
-Persistent Worlds: Automated backups to cloud storage (AWS S3, GCP Buckets).
+Basic Backups: Manual world data backup script (backup.sh).
 
-Monitoring: Preconfigured dashboards (Grafana) for server health, player activity, and JVM metrics.
-
-Security: RBAC, encrypted secrets, and network policies.
-
-Multi-Cloud Ready: Deploy on AWS EKS, Google GKE, or local (Minikube).
+Monitoring: Prometheus and Grafana included in Docker Compose for metrics.
 
 🚀 Quick Start
 Prerequisites
-Docker & Docker Compose (for local testing)
+Docker & Docker Compose
 
-Kubernetes Cluster (e.g., Minikube, EKS, GKE)
+Kubernetes cluster (e.g., Minikube, EKS)
 
-kubectl and helm installed
+kubectl
 
 1. Local Deployment (Docker Compose)
 bash
@@ -30,121 +26,62 @@ Copy
 git clone https://github.com/Michael-ctrl-eng/Minecraft-Server-Cluster.git  
 cd Minecraft-Server-Cluster  
 
-# Start 2 servers + Nginx load balancer + Prometheus  
-docker-compose up -d --scale minecraft=2  
-Access Servers: localhost:25565 (load balanced across 2 instances).
+# Start 1 Minecraft server + Nginx + Prometheus/Grafana  
+docker-compose up -d  
+Access Minecraft: localhost:25565
 
-2. Production Deployment (Kubernetes)
+Grafana Dashboard: localhost:3000 (default: admin/admin)
+
+2. Kubernetes Deployment
 bash
 Copy
-# Deploy the cluster  
 kubectl apply -f k8s/  
+Auto-Scaling: Servers scale based on CPU usage (default: scales at 50% CPU).
 
-# Deploy monitoring stack (Prometheus + Grafana)  
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  
-helm install minecraft-monitoring prometheus-community/kube-prometheus-stack -f k8s/monitoring/values.yaml  
-Access Grafana Dashboard:
-
-bash
+yaml
 Copy
-kubectl port-forward svc/minecraft-monitoring-grafana 3000:80  
-# Open http://localhost:3000 (admin/password)  
+# k8s/hpa.yaml  
+metrics:  
+- type: Resource  
+  resource:  
+    name: cpu  
+    target:  
+      type: Utilization  
+      averageUtilization: 50  
 🔧 Configuration
-Environment Variables (Docker/Kubernetes)
+Environment Variables
 Variable	Description	Default
 EULA	Accept Minecraft EULA	TRUE
-MEMORY	JVM Heap Size	2G
-PLAYERS_MAX	Max players per server	20
-BACKUP_INTERVAL	Cloud backup interval (minutes)	30
-Example (Kubernetes Deployment):
+MEMORY	JVM heap size (per server)	2G
+SERVER_PORT	Minecraft server port	25565
+Override in Docker Compose:
 
 yaml
 Copy
-env:  
-- name: MEMORY  
-  value: "4G"  
-- name: BACKUP_INTERVAL  
-  value: "15"  
-Auto-Scaling
-The cluster scales based on player count using Prometheus metrics and the Horizontal Pod Autoscaler (HPA):
-
-Metrics Collection: A sidecar container in each Minecraft pod scrapes player count from server logs.
-
-Prometheus Adapter: Translates custom metrics (players_active) for HPA.
-
-Scaling Rule: Scale up if players_active > 15 per server for 5 minutes.
-
-HPA Manifest:
-
-yaml
-Copy
-apiVersion: autoscaling/v2  
-kind: HorizontalPodAutoscaler  
-metadata:  
-  name: minecraft-hpa  
-spec:  
-  scaleTargetRef:  
-    apiVersion: apps/v1  
-    kind: Deployment  
-    name: minecraft  
-  minReplicas: 1  
-  maxReplicas: 10  
-  metrics:  
-  - type: Pods  
-    pods:  
-      metric:  
-        name: players_active  
-      target:  
-        type: AverageValue  
-        averageValue: 15  
-🔒 Security Best Practices
-Network Policies: Restrict pod-to-pod traffic (see k8s/security/network-policies.yaml).
-
-RBAC: Least-privilege service accounts for Prometheus and backups.
-
-Secrets Management: Use Kubernetes Secrets or external vaults (e.g., AWS Secrets Manager).
-
-Image Security: Scan Docker images with Trivy (make scan).
-
-🗄️ Backup & Restore
-Automated Backups:
-
-CronJob backs up world data to S3/GCP every 30 minutes.
-
-Enable in k8s/backups/backup-job.yaml:
-
-yaml
-Copy
-- name: BACKUP_ENABLED  
-  value: "true"  
-- name: AWS_BUCKET  
-  value: "s3://your-bucket"  
-Restore a Snapshot:
+# docker-compose.yml  
+environment:  
+  - MEMORY=4G  
+🗄️ Backups
+Manually run the backup script to save world data:
 
 bash
 Copy
-kubectl exec -it <minecraft-pod> -- /scripts/restore.sh s3://your-bucket/world-2023-10-01.tar.gz  
-📊 Monitoring & Logging
-Preconfigured Dashboards:
+./backup.sh  
+Backups are stored in backups/.
 
-Grafana: Player activity, memory usage, and server latency.
+📊 Monitoring
+Prometheus scrapes server metrics (port 9090).
 
-Alerts: Slack/Discord notifications for high CPU or low disk space.
+Grafana comes preconfigured with a basic dashboard (port 3000).
 
-Grafana Dashboard
+⚠️ Limitations
+Autoscaling: Currently scales on CPU usage, not player count.
 
-Log Aggregation:
+Security: No RBAC, network policies, or encrypted secrets.
 
-bash
-Copy
-# Deploy Loki + Promtail for logs  
-helm install loki grafana/loki-stack --values k8s/monitoring/loki-values.yaml  
-🤝 Contributing
-Fork the repo.
+Backups: Manual script only—no automated cloud backups or CronJobs.
 
-Test changes with make test (requires Terratest).
-
-Submit a PR with updated docs and tests.
+Tests: No automated validation for scaling/backups.
 
 📜 License
-Apache 2.0 - See LICENSE.
+MIT License. See LICENSE.
