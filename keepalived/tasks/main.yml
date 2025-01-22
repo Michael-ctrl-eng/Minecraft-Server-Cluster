@@ -1,0 +1,22 @@
+---
+- name: Install Keepalived
+  apt:
+    name: keepalived
+    state: present
+
+- name: Template Keepalived configuration
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart keepalived
+
+- name: Enable and start Keepalived
+  systemd:
+    name: keepalived
+    enabled: yes
+    state: started
+
+- meta: flush_handlers
