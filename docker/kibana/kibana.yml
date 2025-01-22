@@ -1,7 +1,13 @@
 server.name: "kibana"
 server.host: "0.0.0.0"
 elasticsearch.hosts: [
-  "http://elasticsearch1:9200",
-  "http://elasticsearch2:9200",
-  "http://elasticsearch3:9200"
+  "https://elasticsearch1:9200",
+  "https://elasticsearch2:9200",
+  "https://elasticsearch3:9200"
 ]
+server.ssl.enabled: "{{ kibana_security_enabled }}"
+server.ssl.certificate: /etc/kibana/certs/kibana.crt
+server.ssl.key: /etc/kibana/certs/kibana.key
+elasticsearch.ssl.certificateAuthorities: [ "/etc/kibana/certs/ca.crt" ]
+elasticsearch.username: "kibana_user"
+elasticsearch.password: "{{ kibana_password }}"
