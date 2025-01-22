@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1  
+kind: NetworkPolicy  
+metadata:  
+  name: minecraft-allow-monitoring  
+spec:  
+  podSelector:  
+    matchLabels:  
+      app: minecraft  
+  ingress:  
+  - from:  
+    - podSelector:  
+        matchLabels:  
+          app: prometheus  
+    ports:  
+    - port: 8000  # Metrics exporter port  
