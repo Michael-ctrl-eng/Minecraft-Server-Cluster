@@ -1,0 +1,37 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - common
+
+- hosts: elasticsearch_servers
+  become: true
+  roles:
+    - elasticsearch
+
+- hosts: logstash_servers
+  become: true
+  roles:
+    - logstash
+
+- hosts: kibana_servers
+  become: true
+  roles:
+    - kibana
+
+- hosts: minecraft_servers
+  become: true
+  roles:
+    - minecraft_server
+    - filebeat
+    - backup
+
+- hosts: haproxy_servers
+  become: true
+  roles:
+    - haproxy
+
+- hosts: monitoring_servers
+  become: true
+  roles:
+    - monitoring
