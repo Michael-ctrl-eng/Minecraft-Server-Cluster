@@ -1,0 +1,54 @@
+- name: Install UFW
+  apt:
+    name: ufw
+    state: present
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    port: ssh
+    proto: tcp
+
+- name: Allow Minecraft Port
+  ufw:
+    rule: allow
+    port: "{{ minecraft_server_port }}"
+    proto: tcp
+
+- name: Allow HTTP (for Kibana and Grafana if not using a reverse proxy)
+  ufw:
+    rule: allow
+    port: http
+    proto: tcp
+
+- name: Allow HTTPS (if you configure TLS for Kibana/Grafana directly)
+  ufw:
+    rule: allow
+    port: https
+    proto: tcp
+
+- name: Allow Elasticsearch Port (for internal communication)
+  ufw:
+    rule: allow
+    src: "{{ item }}"
+    port: "{{ es_http_port }}"
+    proto: tcp
+  with_items: "{{ groups['elasticsearch_servers'] }}"
+
+- name: Allow Logstash Port (Beats input)
+  ufw:
+    rule: allow
+    src: "{{ item }}"
+    port: 5044
+    proto: tcp
+  with_items: "{{ groups['minecraft_servers'] }}"
+
+- name: Deny all other incoming traffic
+  ufw:
+    rule: deny
+    direction: in
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+    policy: allow
