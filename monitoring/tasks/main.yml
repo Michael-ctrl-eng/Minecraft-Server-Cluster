@@ -1,0 +1,172 @@
+---
+- name: Create Prometheus group
+  group:
+    name: prometheus
+    state: present
+    system: yes
+
+- name: Create Prometheus user
+  user:
+    name: prometheus
+    group: prometheus
+    create_home: no
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Create Prometheus data directory
+  file:
+    path: /var/lib/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: 0755
+
+- name: Download Prometheus
+  unarchive:
+    src: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+    creates: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64"
+
+- name: Copy Prometheus binaries
+  copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - prometheus
+    - promtool
+
+- name: Copy Prometheus configuration
+  template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+    mode: 0644
+  notify: restart prometheus
+
+- name: Create Prometheus service file
+  template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner
+        group: root
+    mode: 0644
+  notify:
+    - reload systemd
+    - restart prometheus
+
+- name: Enable Prometheus service
+  systemd:
+    name: prometheus
+    enabled: yes
+    masked: no
+
+- name: Start Prometheus service
+  systemd:
+    name: prometheus
+    state: started
+
+- name: Create Grafana group
+  group:
+    name: grafana
+    state: present
+    system: yes
+
+- name: Create Grafana user
+  user:
+    name: grafana
+    group: grafana
+    create_home: no
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Download Grafana
+  unarchive:
+    src: "https://dl.grafana.com/oss/release/grafana_{{ grafana_version }}_amd64.deb"
+    dest: /tmp/
+    remote_src: yes
+    creates: "/tmp/grafana_{{ grafana_version }}_amd64.deb"
+
+- name: Install Grafana package
+  apt:
+    deb: "/tmp/grafana_{{ grafana_version }}_amd64.deb"
+    state: present
+
+- name: Template Grafana configuration
+  template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+    owner: grafana
+    group: grafana
+    mode: 0644
+  notify: restart grafana
+
+- name: Enable Grafana service
+  systemd:
+    name: grafana-server
+    enabled: yes
+    masked: no
+
+- name: Start Grafana service
+  systemd:
+    name: grafana-server
+    state: started
+
+- name: Create Node Exporter group
+  group:
+    name: node_exporter
+    state: present
+    system: yes
+
+- name: Create Node Exporter user
+  user:
+    name: node_exporter
+    group: node_exporter
+    create_home: no
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Download Node Exporter
+  unarchive:
+    src: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+    creates: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64"
+
+- name: Copy Node Exporter binary
+  copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+    dest: "/usr/local/bin/node_exporter"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create Node Exporter service file
+  template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload systemd
+    - restart node_exporter
+
+- name: Enable Node Exporter service
+  systemd:
+    name: node_exporter
+    enabled: yes
+    masked: no
+
+- name: Start Node Exporter service
+  systemd:
+    name: node_exporter
+    state: started
+
+- meta: flush_handlers
