@@ -102,3 +102,27 @@
     state: started
 
 - meta: flush_handlers
+
+- name: Download Prometheus Exporter Plugin
+  get_url:
+    url: "{{ prometheus_exporter_plugin_url }}" # URL to the plugin's JAR file
+    dest: "{{ minecraft_server_directory }}/docker/data/plugins/PrometheusExporter.jar"
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0644
+  when:
+    - minecraft_server_type in ["SPIGOT", "PAPER", "BUKKIT"]
+    - prometheus_exporter_enabled | bool
+  notify: restart minecraft
+
+- name: Template Prometheus Exporter config (if needed)
+  template:
+    src: PrometheusExporter.yml.j2
+    dest: "{{ minecraft_server_directory }}/docker/data/plugins/PrometheusExporter/config.yml"
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0644
+  when:
+    - prometheus_exporter_enabled | bool
+    - prometheus_exporter_config_template is defined
+  notify: restart minecraft
