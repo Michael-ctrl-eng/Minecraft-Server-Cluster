@@ -1,0 +1,34 @@
+---
+# ... (previous tasks)
+
+- name: Create Kibana certs directory
+  file:
+    path: /etc/kibana/certs
+    state: directory
+    owner: kibana
+    group: kibana
+    mode: 0750
+
+- name: Copy Kibana certificate and key
+  copy:
+    src: "files/certs/{{ item }}"
+    dest: "/etc/kibana/certs/{{ item }}"
+    owner: kibana
+    group: kibana
+    mode: 0600
+  with_items:
+    - kibana.crt
+    - kibana.key
+    - ca.crt
+  no_log: true
+  when: kibana_security_enabled | bool
+
+- name: Template Kibana configuration (with security)
+  template:
+    src: kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+    owner: kibana
+    group: kibana
+    mode: 0660
+  notify: restart kibana
+  when: kibana_security_enabled | bool
