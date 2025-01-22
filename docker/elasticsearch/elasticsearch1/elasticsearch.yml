@@ -1,0 +1,14 @@
+cluster.name: "es-minecraft-cluster"
+node.name: "elasticsearch1" # Update for each node
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs
+network.host: 0.0.0.0
+http.port: 9200
+discovery.seed_hosts: ["elasticsearch2", "elasticsearch3"] # Update for each node
+cluster.initial_master_nodes: ["elasticsearch1", "elasticsearch2", "elasticsearch3"]
+xpack.security.enabled: false
+# xpack.security.transport.ssl.enabled: true # Uncomment for TLS
+# xpack.security.transport.ssl.verification_mode: certificate # Uncomment for TLS
+# xpack.security.transport.ssl.keystore.path: /path/to/keystore.p12 # Provide keystore path
+# xpack.security.transport.ssl.truststore.path: /path/to/truststore.p12 # Provide truststore path
+# ... (Add more security settings, TLS, user authentication as needed for production)
