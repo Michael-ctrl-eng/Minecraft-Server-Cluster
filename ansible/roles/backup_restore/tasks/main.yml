@@ -1,0 +1,44 @@
+---
+- name: Install Restic (Debian/Ubuntu)
+  apt:
+    name: restic
+    state: present
+  when: backup_enabled | bool
+
+- name: Create Backup Script
+  template:
+    src: backup.sh
+    dest: "{{ minecraft_server_directory }}/backup.sh"
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0755
+  when: backup_enabled | bool
+
+- name: Create Restore Script
+  template:
+    src: restore.sh
+    dest: "{{ minecraft_server_directory }}/restore.sh"
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0755
+  when: backup_enabled | bool
+
+- name: Schedule Backup with Cron
+  cron:
+    name: "Minecraft Backup"
+    minute: "0"
+    hour: "2"
+    job: "{{ minecraft_server_directory }}/backup.sh"
+    user: "{{ minecraft_user }}"
+    cron_file: minecraft_backup
+  when: backup_enabled | bool
+
+- name: Initialize Restic Repository
+  command:
+    cmd: "restic init"
+    creates: "{{ restic_repository }}/config"
+  environment:
+    RESTIC_REPOSITORY: "{{ restic_repository }}"
+    RESTIC_PASSWORD: "{{ restic_password }}"
+  when: backup_enabled | bool and not restic_repository is search("^s3:")
+  # S3 repo needs to be initialized differently. Omitted for brevity, but happy to expand if you are using S3.
