@@ -1,0 +1,74 @@
+---
+- name: Create Prometheus group
+  group:
+    name: prometheus
+    state: present
+    system: yes
+
+- name: Create Prometheus user
+  user:
+    name: prometheus
+    group: prometheus
+    create_home: no
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Create Prometheus data directory
+  file:
+    path: /var/lib/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: 0755
+
+- name: Download Prometheus
+  unarchive:
+    src: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+    creates: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64"
+
+- name: Copy Prometheus binaries
+  copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - prometheus
+    - promtool
+
+- name: Copy Prometheus configuration
+  template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+    mode: 0644
+  notify: restart prometheus
+
+- name: Create Prometheus service file
+  template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload systemd
+    - restart prometheus
+
+- name: Enable Prometheus service
+  systemd:
+    name: prometheus
+    enabled: yes
+    masked: no
+
+- name: Start Prometheus service
+  systemd:
+    name: prometheus
+    state: started
+
+- meta: flush_handlers
