@@ -11,6 +11,18 @@ services:
       - cluster.initial_master_nodes=elasticsearch1,elasticsearch2,elasticsearch3
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms{{ es_heap_size }} -Xmx{{ es_heap_size }}"
+      - xpack.security.enabled={{ es_security_enabled }}
+      - xpack.security.http.ssl.enabled={{ es_xpack_security_http_ssl_enabled }}
+      - xpack.security.http.ssl.keystore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.http.ssl.keystore.password={{ es_xpack_security_http_ssl_keystore_password }}
+      - xpack.security.http.ssl.truststore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.http.ssl.truststore.password={{ es_xpack_security_http_ssl_truststore_password }}
+      - xpack.security.transport.ssl.enabled={{ es_xpack_security_transport_ssl_enabled }}
+      - xpack.security.transport.ssl.verification_mode={{ es_xpack_security_transport_ssl_verification_mode }}
+      - xpack.security.transport.ssl.keystore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.transport.ssl.keystore.password={{ es_xpack_security_transport_ssl_keystore_password }}
+      - xpack.security.transport.ssl.truststore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.transport.ssl.truststore.password={{ es_xpack_security_transport_ssl_truststore_password }}
     ulimits:
       memlock:
         soft: -1
@@ -18,10 +30,20 @@ services:
     volumes:
       - es_data1:/usr/share/elasticsearch/data
       - ./elasticsearch1/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./certs/elasticsearch.p12:/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - ./certs/ca.crt:/usr/share/elasticsearch/config/certs/ca.crt
     ports:
       - "9201:9200"
     networks:
       - es_net
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
 
   elasticsearch2:
     image: docker.elastic.co/elasticsearch/elasticsearch:{{ es_version }}
@@ -33,6 +55,18 @@ services:
       - cluster.initial_master_nodes=elasticsearch1,elasticsearch2,elasticsearch3
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms{{ es_heap_size }} -Xmx{{ es_heap_size }}"
+      - xpack.security.enabled={{ es_security_enabled }}
+      - xpack.security.http.ssl.enabled={{ es_xpack_security_http_ssl_enabled }}
+      - xpack.security.http.ssl.keystore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.http.ssl.keystore.password={{ es_xpack_security_http_ssl_keystore_password }}
+      - xpack.security.http.ssl.truststore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.http.ssl.truststore.password={{ es_xpack_security_http_ssl_truststore_password }}
+      - xpack.security.transport.ssl.enabled={{ es_xpack_security_transport_ssl_enabled }}
+      - xpack.security.transport.ssl.verification_mode={{ es_xpack_security_transport_ssl_verification_mode }}
+      - xpack.security.transport.ssl.keystore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.transport.ssl.keystore.password={{ es_xpack_security_transport_ssl_keystore_password }}
+      - xpack.security.transport.ssl.truststore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.transport.ssl.truststore.password={{ es_xpack_security_transport_ssl_truststore_password }}
     ulimits:
       memlock:
         soft: -1
@@ -40,8 +74,18 @@ services:
     volumes:
       - es_data2:/usr/share/elasticsearch/data
       - ./elasticsearch2/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./certs/elasticsearch.p12:/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - ./certs/ca.crt:/usr/share/elasticsearch/config/certs/ca.crt
     networks:
       - es_net
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
 
   elasticsearch3:
     image: docker.elastic.co/elasticsearch/elasticsearch:{{ es_version }}
@@ -53,6 +97,18 @@ services:
       - cluster.initial_master_nodes=elasticsearch1,elasticsearch2,elasticsearch3
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms{{ es_heap_size }} -Xmx{{ es_heap_size }}"
+      - xpack.security.enabled={{ es_security_enabled }}
+      - xpack.security.http.ssl.enabled={{ es_xpack_security_http_ssl_enabled }}
+      - xpack.security.http.ssl.keystore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.http.ssl.keystore.password={{ es_xpack_security_http_ssl_keystore_password }}
+      - xpack.security.http.ssl.truststore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.http.ssl.truststore.password={{ es_xpack_security_http_ssl_truststore_password }}
+      - xpack.security.transport.ssl.enabled={{ es_xpack_security_transport_ssl_enabled }}
+      - xpack.security.transport.ssl.verification_mode={{ es_xpack_security_transport_ssl_verification_mode }}
+      - xpack.security.transport.ssl.keystore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.transport.ssl.keystore.password={{ es_xpack_security_transport_ssl_keystore_password }}
+      - xpack.security.transport.ssl.truststore.path=/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - xpack.security.transport.ssl.truststore.password={{ es_xpack_security_transport_ssl_truststore_password }}
     ulimits:
       memlock:
         soft: -1
@@ -60,8 +116,18 @@ services:
     volumes:
       - es_data3:/usr/share/elasticsearch/data
       - ./elasticsearch3/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./certs/elasticsearch.p12:/usr/share/elasticsearch/config/certs/elasticsearch.p12
+      - ./certs/ca.crt:/usr/share/elasticsearch/config/certs/ca.crt
     networks:
       - es_net
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
 
 volumes:
   es_data1:
