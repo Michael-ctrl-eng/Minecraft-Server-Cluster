@@ -13,6 +13,29 @@
     system: yes
     shell: /usr/sbin/nologin
 
+- name: Create Kibana certs directory
+  file:
+    path: /etc/kibana/certs
+    state: directory
+    owner: kibana
+    group: kibana
+    mode: 0750
+  when: kibana_security_enabled | bool
+
+- name: Copy Kibana certificate and key
+  copy:
+    src: "files/certs/{{ item }}"
+    dest: "/etc/kibana/certs/{{ item }}"
+    owner: kibana
+    group: kibana
+    mode: 0600
+  with_items:
+    - kibana.crt
+    - kibana.key
+    - ca.crt
+  no_log: true
+  when: kibana_security_enabled | bool
+
 - name: Download Kibana Debian package
   get_url:
     url: "https://artifacts.elastic.co/downloads/kibana/kibana-{{ kibana_version }}-amd64.deb"
