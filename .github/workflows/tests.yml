@@ -13,8 +13,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build image
-        run: docker build -t michaelctrleng/minecraft-server-cluster:latest -f docker/minecraft_server/Dockerfile .
+     - name: Build image
+  run: docker build -t michaelctrleng/minecraft-server-cluster:latest -f docker/minecraft_server/Dockerfile .
 
       - name: Trivy Scan - Image Vulnerability Scan
         uses: aquasec/trivy-action@master
