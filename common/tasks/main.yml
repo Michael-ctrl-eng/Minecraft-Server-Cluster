@@ -14,10 +14,12 @@
       - apt-transport-https
       - ca-certificates
       - curl
-      - gnupg-agent
+      - gnupg
       - software-properties-common
       - unzip
       - git
+      - rcon-cli
+      - logrotate
     state: present
 
 - name: Add Docker GPG apt Key
@@ -56,15 +58,26 @@
     groups: docker
     append: yes
 
-- name: Install logrotate
-  apt:
-    name: logrotate
-    state: present
-
 - name: Configure logrotate for Minecraft
   template:
     src: logrotate_minecraft.j2
     dest: /etc/logrotate.d/minecraft
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Configure logrotate for Elasticsearch
+  template:
+    src: logrotate_elasticsearch.j2
+    dest: /etc/logrotate.d/elasticsearch
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Configure logrotate for Logstash
+  template:
+    src: logrotate_logstash.j2
+    dest: /etc/logrotate.d/logstash
     owner: root
     group: root
     mode: 0644
