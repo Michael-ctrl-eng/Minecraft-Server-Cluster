@@ -1,0 +1,75 @@
+---
+- name: Ensure Elasticsearch group exists
+  group:
+    name: elasticsearch
+    state: present
+    system: yes
+
+- name: Ensure Elasticsearch user exists
+  user:
+    name: elasticsearch
+    group: elasticsearch
+    create_home: no
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Create Elasticsearch directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: 0755
+  with_items:
+    - "{{ es_config_dir }}"
+    - "{{ es_data_dir }}"
+    - /var/log/elasticsearch
+
+- name: Download Elasticsearch Debian package
+  get_url:
+    url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ es_version }}-amd64.deb"
+    dest: "/tmp/elasticsearch-{{ es_version }}-amd64.deb"
+    mode: 0644
+
+- name: Install Elasticsearch Debian package
+  apt:
+    deb: "/tmp/elasticsearch-{{ es_version }}-amd64.deb"
+    state: present
+
+- name: Template Elasticsearch configuration
+  template:
+    src: elasticsearch.yml.j2
+    dest: "{{ es_config_dir }}/elasticsearch.yml"
+    owner: elasticsearch
+    group: elasticsearch
+    mode: 0660
+  notify: restart elasticsearch
+
+- name: Template Elasticsearch JVM options
+  template:
+    src: jvm.options.j2
+    dest: "{{ es_config_dir }}/jvm.options"
+    owner: elasticsearch
+    group: elasticsearch
+    mode: 0660
+  notify: restart elasticsearch
+
+- name: Enable Elasticsearch service
+  systemd:
+    name: elasticsearch
+    enabled: yes
+    masked: no
+
+- name: Start Elasticsearch service
+  systemd:
+    name: elasticsearch
+    state: started
+
+- meta: flush_handlers
+
+- name: Wait for Elasticsearch to be ready
+  uri:
+    url: "http://localhost:{{ es_http_port }}"
+    status_code: 200
+    retries: 60
+    delay: 5
