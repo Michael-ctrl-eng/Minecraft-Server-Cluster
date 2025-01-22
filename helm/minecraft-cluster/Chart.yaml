@@ -1,0 +1,31 @@
+apiVersion: v2
+name: minecraft-cluster
+description: A Helm chart for deploying a highly available and scalable Minecraft Server cluster on Kubernetes
+version: 0.1.0
+appVersion: "1.0.0" # Your application version
+
+dependencies:
+  - name: elasticsearch
+    version: 7.17.0 # Use the desired version
+    repository: https://helm.elastic.co
+    condition: elasticsearch.enabled
+  - name: logstash
+    version: 7.17.0 # Use the desired version
+    repository: https://helm.elastic.co
+    condition: logstash.enabled
+  - name: kibana
+    version: 7.17.0 # Use the desired version
+    repository: https://helm.elastic.co
+    condition: kibana.enabled
+  - name: prometheus
+    version: 15.11.2 # Check for latest compatible version
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled
+  - name: grafana
+    version: 6.24.2  # Check for latest compatible version
+    repository: https://grafana.github.io/helm-charts
+    condition: grafana.enabled
+  #  - name: alertmanager # If you use a separate Helm chart for Alertmanager
+  #    version: x.y.z
+  #    repository: ...
+  #    condition: alertmanager.enabled
