@@ -1,0 +1,14 @@
+# ... (other settings)
+
+xpack.security.enabled: "{{ es_security_enabled }}"
+xpack.security.transport.ssl.enabled: "{{ es_xpack_security_transport_ssl_enabled }}"
+xpack.security.transport.ssl.verification_mode: "{{ es_xpack_security_transport_ssl_verification_mode }}"
+xpack.security.transport.ssl.keystore.path: "{{ es_config_dir }}/certs/elasticsearch.p12"
+xpack.security.transport.ssl.keystore.password: "{{ es_keystore_password }}"
+xpack.security.transport.ssl.truststore.path: "{{ es_config_dir }}/certs/elasticsearch.p12"
+xpack.security.transport.ssl.truststore.password: "{{ es_keystore_password }}"
+xpack.security.http.ssl.enabled: "{{ es_xpack_security_http_ssl_enabled }}"
+xpack.security.http.ssl.keystore.path: "{{ es_config_dir }}/certs/elasticsearch.p12"
+xpack.security.http.ssl.keystore.password: "{{ es_keystore_password }}"
+xpack.security.http.ssl.truststore.path: "{{ es_config_dir }}/certs/elasticsearch.p12"
+xpack.security.http.ssl.truststore.password: "{{ es_keystore_password }}"
