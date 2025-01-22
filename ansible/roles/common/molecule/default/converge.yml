@@ -1,0 +1,2 @@
+cd ansible/roles/common
+molecule init scenario --role-name common --scenario-name default -r ansible
