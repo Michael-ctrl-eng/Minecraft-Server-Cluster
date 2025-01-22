@@ -1,0 +1,47 @@
+---
+- name: Ensure Kibana group exists
+  group:
+    name: kibana
+    state: present
+    system: yes
+
+- name: Ensure Kibana user exists
+  user:
+    name: kibana
+    group: kibana
+    create_home: no
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Download Kibana Debian package
+  get_url:
+    url: "https://artifacts.elastic.co/downloads/kibana/kibana-{{ kibana_version }}-amd64.deb"
+    dest: "/tmp/kibana-{{ kibana_version }}-amd64.deb"
+    mode: 0644
+
+- name: Install Kibana Debian package
+  apt:
+    deb: "/tmp/kibana-{{ kibana_version }}-amd64.deb"
+    state: present
+
+- name: Template Kibana configuration
+  template:
+    src: kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+    owner: kibana
+    group: kibana
+    mode: 0660
+  notify: restart kibana
+
+- name: Enable Kibana service
+  systemd:
+    name: kibana
+    enabled: yes
+    masked: no
+
+- name: Start Kibana service
+  systemd:
+    name: kibana
+    state: started
+
+- meta: flush_handlers
