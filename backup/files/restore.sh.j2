@@ -4,6 +4,11 @@ set -e
 # Stop Minecraft server before restore
 systemctl stop minecraft
 
+# Clear existing Minecraft data (CAREFUL!)
+rm -rf "{{ minecraft_server_directory }}/world/*"
+rm -rf "{{ minecraft_server_directory }}/plugins/*"
+rm -rf "{{ minecraft_server_directory }}/logs/*"
+
 # Restore Minecraft data from the latest snapshot
 restic restore latest --target "{{ minecraft_server_directory }}"
 
