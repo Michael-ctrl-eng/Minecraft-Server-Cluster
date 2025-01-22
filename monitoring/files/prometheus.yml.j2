@@ -18,7 +18,7 @@ scrape_configs:
     static_configs:
       - targets:
         {% for host in groups['minecraft_servers'] -%}
-          - "{{ hostvars[host].ansible_host }}:9120"  # Assuming a Minecraft exporter is running on this port
+          - "{{ hostvars[host].ansible_host }}:9120"
         {% endfor %}
     metrics_path: /metrics
     relabel_configs:
@@ -30,5 +30,5 @@ scrape_configs:
     static_configs:
       - targets:
         {% for host in groups['haproxy_servers'] -%}
-          - "{{ hostvars[host].ansible_host }}:9101" # Assuming a HAProxy exporter is running on this port
+          - "{{ hostvars[host].ansible_host }}:9101"
         {% endfor %}
