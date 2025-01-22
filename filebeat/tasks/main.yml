@@ -1,0 +1,33 @@
+---
+- name: Download Filebeat Debian package
+  get_url:
+    url: "https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-{{ filebeat_version }}-amd64.deb"
+    dest: "/tmp/filebeat-{{ filebeat_version }}-amd64.deb"
+    mode: 0644
+
+- name: Install Filebeat Debian package
+  apt:
+    deb: "/tmp/filebeat-{{ filebeat_version }}-amd64.deb"
+    state: present
+
+- name: Template Filebeat configuration
+  template:
+    src: filebeat.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart filebeat
+
+- name: Enable Filebeat service
+  systemd:
+    name: filebeat
+    enabled: yes
+    masked: no
+
+- name: Start Filebeat service
+  systemd:
+    name: filebeat
+    state: started
+
+- meta: flush_handlers
