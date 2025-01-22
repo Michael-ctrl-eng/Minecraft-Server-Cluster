@@ -1,0 +1,11 @@
+apiVersion: v1  
+kind: PersistentVolumeClaim  
+metadata:  
+  name: minecraft-world  
+spec:  
+  storageClassName: ""  # Let the cluster decide  
+  accessModes:  
+    - ReadWriteOnce  
+  resources:  
+    requests:  
+      storage: 10Gi  
