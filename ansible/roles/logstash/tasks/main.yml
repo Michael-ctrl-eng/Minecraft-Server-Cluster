@@ -1,0 +1,34 @@
+---
+# ... (previous tasks)
+
+- name: Create Logstash certs directory
+  file:
+    path: /etc/logstash/certs
+    state: directory
+    owner: logstash
+    group: logstash
+    mode: 0750
+
+- name: Copy Logstash certificate and key
+  copy:
+    src: "files/certs/{{ item }}"
+    dest: "/etc/logstash/certs/{{ item }}"
+    owner: logstash
+    group: logstash
+    mode: 0600
+  with_items:
+    - logstash.crt
+    - logstash.key
+    - ca.crt
+  no_log: true
+  when: logstash_beats_ssl_enabled | bool
+
+- name: Template Logstash configuration (with security)
+  template:
+    src: logstash.conf.j2
+    dest: "{{ ls_config_dir }}/conf.d/logstash.conf"
+    owner: logstash
+    group: logstash
+    mode: 0660
+  notify: restart logstash
+  when: logstash_beats_ssl_enabled | bool
