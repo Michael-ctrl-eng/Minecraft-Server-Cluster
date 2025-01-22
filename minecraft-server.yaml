@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-minecraft
+  namespace: {{ .Values.global.namespace }}
+spec:
+  serviceName: {{ .Release.Name }}-minecraft
+  replicas: {{ .Values.minecraft.server.replicaCount }}
+  selector:
+    matchLabels:
+      app: minecraft
+  template:
+    metadata:
+      labels:
+        app: minecraft
+    spec:
+    {{- if .Values.costOptimization.enabled }}
+      nodeSelector:
+        {{ .Values.costOptimization.nodeSelector | toYaml | nindent 8 }}
+      tolerations:
+        {{ .Values.costOptimization.tolerations | toYaml | nindent 8 }}
+    {{- end }}
+      initContainers:
+      {{- if .Values.minecraft.server.modpackUrl }}
+      - name: download-mods
+        image: appropriate/curl:latest # Or any image with 'curl' or 'wget'
+        command:
+          - "sh"
+          - "-c"
+          - "curl -L {{ .Values.minecraft.server.modpackUrl }} -o /mods/modpack.zip && unzip /mods/modpack.zip -d /mods && rm /mods/modpack.zip"
+        volumeMounts:
+        - name: mods-volume
+          mountPath: /mods
+      {{- end }}
+      containers:
+        - name: minecraft-server
+          image: {{ .Values.minecraft.server.image.repository }}:{{ .Values.minecraft.server.image.tag }}
+          ports:
+            - containerPort: 25565
+              name: minecraft
+            - containerPort: {{ .Values.minecraft.server.rcon.port }}
+              name: rcon
+          env:
+            - name: EULA
+              value: "{{ .Values.minecraft.server.eula }}"
+            - name: TYPE
+              value: "{{ .Values.minecraft.server.type }}"
+            - name: VERSION
+              value: "{{ .Values.minecraft.server.version }}"
+            - name: MOTD
+              value: "{{ .Values.minecraft.server.motd }}"
+            - name: MAX_PLAYERS
+              value: "{{ .Values.minecraft.server.maxPlayers }}"
+            - name: ONLINE_MODE
+              value: "{{ .Values.minecraft.server.onlineMode }}"
+            - name: RCON_ENABLED
+              value: "{{ .Values.minecraft.server.rcon.enabled }}"
+            - name: RCON_PORT
+              value: "{{ .Values.minecraft.server.rcon.port }}"
+            - name: RCON_PASSWORD
+              value: "{{ .Values.minecraft.server.rcon.password }}" # Use a secret for this in production!
+            {{- if .Values.minecraft.server.mods }}
+            - name: MODS
+              value: {{ .Values.minecraft.server.mods | join "," | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: minecraft-data
+              mountPath: /data
+            {{- if .Values.minecraft.server.modpackUrl }}
+            - name: mods-volume
+              mountPath: /mods # Assuming the server can load mods from here
+            {{- end }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      volumes:
+      {{- if .Values.minecraft.server.modpackUrl }}
+        - name: mods-volume
+          emptyDir: {}
+      {{- end }}
+      {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: minecraft-data
+      spec:
+        accessModes: [ "{{ .Values.persistence.accessMode }}" ]
+        storageClassName: "{{ .Values.persistence.storageClass }}"
+        resources:
+          requests:
+            storage: "{{ .Values.persistence.size }}"
+      {{- end }}
+---
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-minecraft-hpa
+  namespace: {{ .Values.global.namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: {{ .Release.Name }}-minecraft
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.autoscaling.targetPlayerCount }}
+    - type: Object
+      object:
+        metric:
+          name: minecraft_player_count # Your custom metric
+        describedObject:
+          apiVersion: v1
+          kind: Pod
+          name: {{ .Release.Name }}-minecraft
+        target:
+          type: AverageValue
+          averageValue: {{ .Values.autoscaling.targetPlayerCount | quote }}
+    {{- end }}
+{{- end }}
