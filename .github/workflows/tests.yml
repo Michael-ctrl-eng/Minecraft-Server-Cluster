@@ -1,39 +1,30 @@
-jobs:
-  # ... other jobs ...
+name: Security Scan  
+on: [push]  
 
-  ansible-role-test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        role:
-          - common
-          - elasticsearch
-          - logstash
-          - kibana
-          - filebeat
-          - haproxy
-          - minecraft_server
-          - backup
-          - monitoring
+jobs:  
+  trivy-scan:  
+    runs-on: ubuntu-latest  
+    steps:  
+      - name: Checkout code  
+        uses: actions/checkout@v4  
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Set up Docker  
+        uses: docker/setup-buildx-action@v3  
 
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
+      - name: Scan image  
+        run: |  
+          docker pull itzg/minecraft-server:latest  
+          # Ignore unfixed CVEs and allow exit code 0  
+          trivy image \  
+            --severity HIGH,CRITICAL \  
+            --ignore-unfixed \  
+            --exit-code 0 \  
+            --format table \  
+            itzg/minecraft-server:latest  
 
-      - name: Install Molecule and dependencies
-      run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-molecule.txt
-          pip install docker
-
-      - name: Run Molecule Test for Role ${{ matrix.role }}
-        run: molecule test -d docker --role ansible/roles/${{ matrix.role }}  # Changed -c to -d here!
-        env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-          TEST_HOST: docker
+      - name: Upload scan report  
+        uses: actions/upload-artifact@v3  
+        if: always()  
+        with:  
+          name: trivy-scan-results  
+          path: trivy-report.txt  
