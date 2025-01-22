@@ -1,0 +1,48 @@
+---
+- name: Create Grafana group
+  group:
+    name: grafana
+    state: present
+    system: yes
+
+- name: Create Grafana user
+  user:
+    name: grafana
+    group: grafana
+    create_home: no
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Download Grafana
+  unarchive:
+    src: "https://dl.grafana.com/oss/release/grafana_{{ grafana_version }}_amd64.deb"
+    dest: /tmp/
+    remote_src: yes
+    creates: "/tmp/grafana_{{ grafana_version }}_amd64.deb"
+
+- name: Install Grafana package
+  apt:
+    deb: "/tmp/grafana_{{ grafana_version }}_amd64.deb"
+    state: present
+
+- name: Template Grafana configuration
+  template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+    owner: grafana
+    group: grafana
+    mode: 0644
+  notify: restart grafana
+
+- name: Enable Grafana service
+  systemd:
+    name: grafana-server
+    enabled: yes
+    masked: no
+
+- name: Start Grafana service
+  systemd:
+    name: grafana-server
+    state: started
+
+- meta: flush_handlers
