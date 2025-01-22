@@ -1,0 +1,9 @@
+{{ minecraft_server_directory }}/logs/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 {{ minecraft_user }} {{ minecraft_user }}
+}
