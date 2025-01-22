@@ -15,9 +15,9 @@ jobs:
     - name: Update dependencies
       run: |
         # Example command to update golang.org/x/crypto
-        go get -u golang.org/x/crypto@v0.31.0
+        go install golang.org/x/crypto@v0.31.0
         # Example command to update golang.org/x/net
-        go get -u golang.org/x/net@v0.33.0
+        go install golang.org/x/net@v0.33.0
         # Example command to update scala-library
         # This assumes you have a build tool like sbt or Maven. Adjust as necessary.
         sbt update
