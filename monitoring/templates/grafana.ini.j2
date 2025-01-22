@@ -1,0 +1,25 @@
+[paths]
+data = /var/lib/grafana
+logs = /var/log/grafana
+plugins = /var/lib/grafana/plugins
+provisioning = /etc/grafana/provisioning
+
+[server]
+http_port = 3000
+domain = localhost
+
+[database]
+type = sqlite3
+path = /var/lib/grafana/grafana.db
+
+[users]
+allow_sign_up = false
+
+[auth.anonymous]
+enabled = true
+org_name = Main Org.
+org_role = Viewer
+
+[security]
+admin_user = admin
+admin_password = your_grafana_admin_password # Change this! Use Ansible Vault!
