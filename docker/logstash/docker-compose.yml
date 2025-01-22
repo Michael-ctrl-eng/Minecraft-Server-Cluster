@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  logstash:
+    image: docker.elastic.co/logstash/logstash:{{ ls_version }}
+    container_name: logstash
+    volumes:
+      - ./logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5044:5044"
+    environment:
+      LS_JAVA_OPTS: "-Xmx{{ ls_heap_size }} -Xms{{ ls_heap_size }}"
+    networks:
+      - es_net
+    depends_on:
+      - elasticsearch1
+      - elasticsearch2
+      - elasticsearch3
+
+networks:
+  es_net:
+    external: true
