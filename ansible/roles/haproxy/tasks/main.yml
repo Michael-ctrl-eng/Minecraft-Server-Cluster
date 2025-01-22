@@ -13,6 +13,24 @@
     group: root
     mode: 0755
 
+- name: Create HAProxy certs directory
+  file:
+    path: /etc/haproxy/certs
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy HAProxy certificate and key
+  copy:
+    src: "files/certs/{{ haproxy_cert_name }}"
+    dest: "/etc/haproxy/certs/{{ haproxy_cert_name }}"
+    owner: root
+    group: root
+    mode: 0600
+  no_log: true
+  when: haproxy_ssl_enabled | bool
+
 - name: Template HAProxy Docker Compose
   template:
     src: docker-compose.yml.j2
