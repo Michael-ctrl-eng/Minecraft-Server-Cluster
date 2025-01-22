@@ -7,7 +7,10 @@ filebeat.inputs:
     log_type: minecraft
   fields_under_root: true
   scan_frequency: 10s
-  
+  multiline.pattern: '^[[:space:]]+(at|\.{3})\b|^Caused by:'
+  multiline.negate: false
+  multiline.match: after
+
 - type: log
   enabled: true
   paths:
@@ -34,6 +37,10 @@ output.logstash:
     {% if not loop.last %},{% endif %}
   {%- endfor %}
   ]
+  ssl.enabled: "{{ filebeat_logstash_ssl_enabled }}"
+  ssl.certificate_authorities: ["/etc/filebeat/certs/ca.crt"]
+  ssl.certificate: "/etc/filebeat/certs/filebeat.crt"
+  ssl.key: "/etc/filebeat/certs/filebeat.key"
 
 processors:
   - add_host_metadata:
