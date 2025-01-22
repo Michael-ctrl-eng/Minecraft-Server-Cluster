@@ -1,0 +1,7 @@
+server.name: "kibana"
+server.host: "0.0.0.0"
+elasticsearch.hosts: [
+  "http://elasticsearch1:9200",
+  "http://elasticsearch2:9200",
+  "http://elasticsearch3:9200"
+]
