@@ -1,0 +1,84 @@
+---
+- name: Ensure Minecraft group exists
+  group:
+    name: "{{ minecraft_user }}"
+    state: present
+    system: yes
+
+- name: Ensure Minecraft user exists
+  user:
+    name: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    create_home: yes
+    home: "{{ minecraft_server_directory }}"
+    system: yes
+    shell: /bin/bash
+
+- name: Create Minecraft Server Directory
+  file:
+    path: "{{ minecraft_server_directory }}"
+    state: directory
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0755
+
+- name: Create Minecraft Docker Directory
+  file:
+    path: "{{ minecraft_server_directory }}/docker"
+    state: directory
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0755
+
+- name: Template Minecraft Docker Compose
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ minecraft_server_directory }}/docker/docker-compose.yml"
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0644
+
+- name: Create Minecraft Data Directory
+  file:
+    path: "{{ minecraft_server_directory }}/docker/data"
+    state: directory
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0755
+
+- name: Create Minecraft Config Directory
+  file:
+    path: "{{ minecraft_server_directory }}/docker/config"
+    state: directory
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0755
+
+- name: Copy server.properties file
+  template:
+    src: server.properties.j2
+    dest: "{{ minecraft_server_directory }}/docker/config/server.properties"
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0644
+  notify: restart minecraft
+
+- name: Create systemd Service File for Minecraft
+  template:
+    src: minecraft.service.j2
+    dest: /etc/systemd/system/minecraft.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload systemd
+    - restart minecraft
+
+- name: Enable and Start Minecraft systemd Service
+  systemd:
+    name: minecraft
+    daemon_reload: yes
+    enabled: yes
+    state: started
+
+- meta: flush_handlers
