@@ -1,0 +1,11 @@
+apiVersion: monitoring.coreos.com/v1  
+kind: ServiceMonitor  
+metadata:  
+  name: minecraft-metrics  
+spec:  
+  endpoints:  
+  - port: metrics-exporter  
+    interval: 10s  
+  selector:  
+    matchLabels:  
+      app: minecraft  
