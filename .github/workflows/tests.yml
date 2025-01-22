@@ -17,7 +17,7 @@ jobs:
         run: docker build -t michaelctrleng/minecraft-server-cluster:latest -f docker/minecraft_server/Dockerfile .
 
       - name: Trivy Scan - Image Vulnerability Scan
-        uses: aquasecurity/trivy-action@master  # <-- Corrected: aquasec --> aquasecurity
+        uses: aquasec/trivy-action@master  # <--- The correct line - `aquasec`
         with:
           image-ref: 'michaelctrleng/minecraft-server-cluster:latest'
           severity: 'CRITICAL,HIGH'
