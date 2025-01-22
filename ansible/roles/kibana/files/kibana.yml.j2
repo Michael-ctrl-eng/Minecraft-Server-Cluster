@@ -1,0 +1,8 @@
+# ... (other settings)
+
+server.ssl.enabled: "{{ kibana_security_enabled }}"
+server.ssl.certificate: /etc/kibana/certs/kibana.crt
+server.ssl.key: /etc/kibana/certs/kibana.key
+elasticsearch.ssl.certificateAuthorities: [ "/etc/kibana/certs/ca.crt" ]
+elasticsearch.username: "kibana_user"
+elasticsearch.password: "{{ kibana_password }}"
