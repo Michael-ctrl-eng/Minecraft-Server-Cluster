@@ -1,0 +1,21 @@
+version: '3.7'
+
+services:
+  grafana:
+    image: grafana/grafana:{{ grafana_version }}
+    container_name: grafana
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring_net
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: your_grafana_admin_password # Change this!
+    depends_on:
+      - prometheus
+
+networks:
+  monitoring_net:
+    external: true
