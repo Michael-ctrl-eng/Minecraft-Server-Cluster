@@ -27,7 +27,7 @@ frontend minecraft_front
     default_backend minecraft_back
 
 backend minecraft_back
-    balance roundrobin
+    balance roundrobin # Or use other algorithms like leastconn
     option tcp-check
     default-server inter 3s fall 3 rise 2
     {% for server in groups['minecraft_servers'] %}
