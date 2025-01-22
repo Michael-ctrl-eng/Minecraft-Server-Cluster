@@ -1,0 +1,32 @@
+apiVersion: batch/v1  
+kind: CronJob  
+metadata:  
+  name: minecraft-backup  
+spec:  
+  schedule: "*/30 * * * *"  # Every 30 minutes  
+  jobTemplate:  
+    spec:  
+      template:  
+        spec:  
+          containers:  
+          - name: backup  
+            image: amazon/aws-cli:latest  
+            env:  
+              - name: AWS_ACCESS_KEY_ID  
+                valueFrom:  
+                  secretKeyRef:  
+                    name: aws-credentials  
+                    key: access-key  
+              - name: AWS_SECRET_ACCESS_KEY  
+                valueFrom:  
+                  secretKeyRef:  
+                    name: aws-credentials  
+                    key: secret-key  
+            command:  
+              - /bin/sh  
+              - -c  
+              - |  
+                kubectl cp minecraft-pod:/data/world ./world  
+                tar -czvf world-$(date +"%Y-%m-%d").tar.gz ./world  
+                aws s3 cp world-*.tar.gz s3://your-bucket/backups/  
+          restartPolicy: OnFailure  
