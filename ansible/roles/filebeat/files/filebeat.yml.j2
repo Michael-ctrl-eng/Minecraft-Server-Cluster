@@ -1,0 +1,13 @@
+# ... (other settings)
+
+output.logstash:
+  hosts: [
+  {% for host in groups['logstash_servers'] -%}
+    "{{ hostvars[host].ansible_host }}:5044"
+    {% if not loop.last %},{% endif %}
+  {%- endfor %}
+  ]
+  ssl.enabled: "{{ filebeat_logstash_ssl_enabled }}"
+  ssl.certificate_authorities: ["/etc/filebeat/certs/ca.crt"]
+  ssl.certificate: "/etc/filebeat/certs/filebeat.crt"
+  ssl.key: "/etc/filebeat/certs/filebeat.key"
