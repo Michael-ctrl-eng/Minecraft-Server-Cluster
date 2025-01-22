@@ -25,17 +25,6 @@
     - "{{ es_data_dir }}"
     - /var/log/elasticsearch
 
-- name: Download Elasticsearch Debian package
-  get_url:
-    url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ es_version }}-amd64.deb"
-    dest: "/tmp/elasticsearch-{{ es_version }}-amd64.deb"
-    mode: 0644
-
-- name: Install Elasticsearch Debian package
-  apt:
-    deb: "/tmp/elasticsearch-{{ es_version }}-amd64.deb"
-    state: present
-
 - name: Create Elasticsearch certs directory
   file:
     path: "{{ es_config_dir }}/certs"
@@ -43,6 +32,7 @@
     owner: elasticsearch
     group: elasticsearch
     mode: 0750
+  when: es_security_enabled | bool
 
 - name: Copy Elasticsearch keystore and truststore
   copy:
@@ -54,8 +44,19 @@
   with_items:
     - elasticsearch.p12
     - ca.crt
-  no_log: true  # Protect sensitive information in logs
+  no_log: true
   when: es_security_enabled | bool
+
+- name: Download Elasticsearch Debian package
+  get_url:
+    url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ es_version }}-amd64.deb"
+    dest: "/tmp/elasticsearch-{{ es_version }}-amd64.deb"
+    mode: 0644
+
+- name: Install Elasticsearch Debian package
+  apt:
+    deb: "/tmp/elasticsearch-{{ es_version }}-amd64.deb"
+    state: present
 
 - name: Template Elasticsearch configuration
   template:
@@ -94,46 +95,7 @@
     status_code: 200
     retries: 60
     delay: 5
-    validate_certs: no  # Initially, we might use self-signed certs
-  when: es_security_enabled | bool
-
-- name: Create Elasticsearch ILM policy
-  uri:
-    url: "https://localhost:{{ es_http_port }}/_ilm/policy/minecraft_policy"
-    method: PUT
-    user: "elastic"
-    password: "{{ es_admin_password }}"
-    body: '{
-      "policy": {
-        "phases": {
-          "hot": {
-            "min_age": "0ms",
-            "actions": {
-              "set_priority": {
-                "priority": 100
-              },
-              "rollover": {
-                "max_size": "50gb",
-                "max_age": "1d"
-              }
-            }
-          },
-          "delete": {
-            "min_age": "30d",
-            "actions": {
-              "delete": {}
-            }
-          }
-        }
-      }
-    }'
-    body_format: json
-    status_code: 200
-    headers:
-      Content-Type: "application/json"
     validate_certs: no
-  delegate_to: "{{ groups['elasticsearch_servers'][0] }}"
-  run_once: true
   when: es_security_enabled | bool
 
 - name: Set Logstash password
@@ -159,6 +121,22 @@
     user: "elastic"
     password: "{{ es_admin_password }}"
     body: '{ "password": "{{ kibana_password }}" }'
+    body_format: json
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+  delegate_to: "{{ groups['elasticsearch_servers'][0] }}"
+  run_once: true
+  when: es_security_enabled | bool
+
+- name: Create elastic user
+  uri:
+    url: "https://localhost:{{ es_http_port }}/_security/user/elastic/_password"
+    method: POST
+    user: "elastic"
+    password: "{{ es_admin_password }}"
+    body: '{ "password": "{{ new_es_admin_password }}" }'
     body_format: json
     status_code: 200
     headers:
