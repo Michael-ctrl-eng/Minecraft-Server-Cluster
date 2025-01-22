@@ -5,8 +5,8 @@ services:
     image: itzg/minecraft-server:latest
     container_name: minecraft-server
     ports:
-      - "25565:25565"
-      - "25575:25575"
+      - "{{ minecraft_server_port }}:25565"
+      - "{{ rcon_port }}:25575"
     environment:
       EULA: "TRUE"
       TYPE: "{{ minecraft_server_type }}"
@@ -15,8 +15,8 @@ services:
       MAX_PLAYERS: "{{ minecraft_max_players }}"
       ONLINE_MODE: "{{ online_mode }}"
       JVM_OPTS: "-Xms{{ minecraft_heap_size }} -Xmx{{ minecraft_heap_size }}"
-      RCON_ENABLED: "true"
-      RCON_PORT: "25575"
+      RCON_ENABLED: "{{ rcon_enabled }}"
+      RCON_PORT: "{{ rcon_port }}"
       RCON_PASSWORD: "{{ rcon_password }}"
       # Add other environment variables as needed
     volumes:
