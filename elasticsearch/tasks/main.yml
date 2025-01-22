@@ -36,6 +36,27 @@
     deb: "/tmp/elasticsearch-{{ es_version }}-amd64.deb"
     state: present
 
+- name: Create Elasticsearch certs directory
+  file:
+    path: "{{ es_config_dir }}/certs"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: 0750
+
+- name: Copy Elasticsearch keystore and truststore
+  copy:
+    src: "files/certs/{{ item }}"
+    dest: "{{ es_config_dir }}/certs/{{ item }}"
+    owner: elasticsearch
+    group: elasticsearch
+    mode: 0600
+  with_items:
+    - elasticsearch.p12
+    - ca.crt
+  no_log: true  # Protect sensitive information in logs
+  when: es_security_enabled | bool
+
 - name: Template Elasticsearch configuration
   template:
     src: elasticsearch.yml.j2
@@ -69,7 +90,80 @@
 
 - name: Wait for Elasticsearch to be ready
   uri:
-    url: "http://localhost:{{ es_http_port }}"
+    url: "https://localhost:{{ es_http_port }}"
     status_code: 200
     retries: 60
     delay: 5
+    validate_certs: no  # Initially, we might use self-signed certs
+  when: es_security_enabled | bool
+
+- name: Create Elasticsearch ILM policy
+  uri:
+    url: "https://localhost:{{ es_http_port }}/_ilm/policy/minecraft_policy"
+    method: PUT
+    user: "elastic"
+    password: "{{ es_admin_password }}"
+    body: '{
+      "policy": {
+        "phases": {
+          "hot": {
+            "min_age": "0ms",
+            "actions": {
+              "set_priority": {
+                "priority": 100
+              },
+              "rollover": {
+                "max_size": "50gb",
+                "max_age": "1d"
+              }
+            }
+          },
+          "delete": {
+            "min_age": "30d",
+            "actions": {
+              "delete": {}
+            }
+          }
+        }
+      }
+    }'
+    body_format: json
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+  delegate_to: "{{ groups['elasticsearch_servers'][0] }}"
+  run_once: true
+  when: es_security_enabled | bool
+
+- name: Set Logstash password
+  uri:
+    url: "https://localhost:{{ es_http_port }}/_security/user/logstash_internal/_password"
+    method: POST
+    user: "elastic"
+    password: "{{ es_admin_password }}"
+    body: '{ "password": "{{ logstash_password }}" }'
+    body_format: json
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+  delegate_to: "{{ groups['elasticsearch_servers'][0] }}"
+  run_once: true
+  when: es_security_enabled | bool
+
+- name: Set Kibana password
+  uri:
+    url: "https://localhost:{{ es_http_port }}/_security/user/kibana_user/_password"
+    method: POST
+    user: "elastic"
+    password: "{{ es_admin_password }}"
+    body: '{ "password": "{{ kibana_password }}" }'
+    body_format: json
+    status_code: 200
+    headers:
+      Content-Type: "application/json"
+    validate_certs: no
+  delegate_to: "{{ groups['elasticsearch_servers'][0] }}"
+  run_once: true
+  when: es_security_enabled | bool
