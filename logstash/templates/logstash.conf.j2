@@ -1,0 +1,61 @@
+input {
+  beats {
+    port => 5044
+    client_inactivity_timeout => 300
+  }
+}
+
+filter {
+  if [fields][log_type] == "minecraft" {
+    grok {
+      match => { "message" => "%{TIMESTAMP_ISO8601:log_timestamp} \[%{DATA:thread_name}\/%{LOGLEVEL:log_level}\] \[%{JAVACLASS:logger}\]: %{GREEDYDATA:log_message}" }
+      tag_on_failure => ["_grokparsefailure_minecraft"]
+    }
+    date {
+      match => [ "log_timestamp", "ISO8601" ]
+      target => "@timestamp"
+    }
+  } else if [fields][log_type] == "haproxy" {
+    grok {
+      match => { "message" => "%{IPORHOST:client_ip}:%{POSINT:client_port} \[%{HTTPDATE:accept_date}\] %{NOTSPACE:frontend_name} %{NOTSPACE:backend_name}/%{NOTSPACE:server_name} %{NUMBER:time_request}/%{NUMBER:time_queue}/%{NUMBER:time_backend_connect}/%{NUMBER:time_backend_response}/%{NUMBER:time_duration} %{NUMBER:http_status_code} %{NUMBER:bytes_read} %{DATA:captured_request_cookie} %{DATA:captured_response_cookie} %{NOTSPACE:termination_state} %{NUMBER:actconn}/%{NUMBER:feconn}/%{NUMBER:beconn}/%{NUMBER:srv_conn}/%{NUMBER:retries} %{NUMBER:srv_queue}/%{NUMBER:backend_queue} \"%{WORD:http_verb} %{URIPATHPARAM:request_path} HTTP/%{NUMBER:http_version}\"" }
+      tag_on_failure => ["_grokparsefailure_haproxy"]
+    }
+    date {
+      match => [ "accept_date", "dd/MMM/yyyy:HH:mm:ss Z" ]
+      target => "@timestamp"
+    }
+  } else if [fields][log_type] == "syslog" {
+    grok {
+      match => { "message" => "%{SYSLOGTIMESTAMP:timestamp} %{SYSLOGHOST:hostname} %{DATA:program}(?:\[%{POSINT:pid}\])?: %{GREEDYDATA:message}" }
+      tag_on_failure => ["_grokparsefailure_syslog"]
+    }
+    date {
+      match => [ "timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss", "ISO8601" ]
+      target => "@timestamp"
+    }
+  }
+
+  if "_grokparsefailure" in [tags] {
+    mutate {
+      add_field => { "[grok][failure_reason]" => "Grok parsing failed for one or more patterns." }
+    }
+  }
+
+  mutate {
+    add_field => {
+      "[@metadata][index]" => "%{[fields][log_type]}-%{+YYYY.MM.dd}"
+    }
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => [
+      {% for host in groups['elasticsearch_servers'] -%}
+        "{{ hostvars[host].ansible_host }}:{{ es_http_port }}"
+        {% if not loop.last %},{% endif %}
+      {%- endfor %}
+    ]
+    index => "%{[@metadata][index]}"
+  }
+}
