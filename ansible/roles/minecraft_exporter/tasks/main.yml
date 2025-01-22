@@ -1,0 +1,33 @@
+---
+- name: Create directory for Prometheus Minecraft Exporter
+  file:
+    path: /opt/minecraft_exporter
+    state: directory
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0755
+
+- name: Download Prometheus Minecraft Exporter
+  get_url:
+    url: "{{ prometheus_minecraft_exporter_url }}"
+    dest: "/opt/minecraft_exporter/prometheus_exporter.jar"
+    owner: "{{ minecraft_user }}"
+    group: "{{ minecraft_user }}"
+    mode: 0644
+
+- name: Create Prometheus Minecraft Exporter service
+  template:
+    src: prometheus_minecraft_exporter.service.j2
+    dest: /etc/systemd/system/prometheus_minecraft_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload systemd
+    - restart prometheus-minecraft-exporter
+
+- name: Enable and start Prometheus Minecraft Exporter
+  systemd:
+    name: prometheus_minecraft_exporter
+    state: started
+    enabled: yes
