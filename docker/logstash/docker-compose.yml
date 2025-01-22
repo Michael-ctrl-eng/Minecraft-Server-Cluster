@@ -1,22 +1,59 @@
 version: '3.7'
 
 services:
-  logstash:
+  logstash1:
     image: docker.elastic.co/logstash/logstash:{{ ls_version }}
-    container_name: logstash
+    container_name: logstash1
     volumes:
       - ./logstash.yml:/usr/share/logstash/config/logstash.yml
       - ./pipeline:/usr/share/logstash/pipeline
+      - ./certs:/etc/logstash/certs
     ports:
       - "5044:5044"
     environment:
       LS_JAVA_OPTS: "-Xmx{{ ls_heap_size }} -Xms{{ ls_heap_size }}"
+      LOGSTASH_BEATS_SSL_ENABLED: "true"
     networks:
       - es_net
     depends_on:
       - elasticsearch1
       - elasticsearch2
       - elasticsearch3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  logstash2:
+    image: docker.elastic.co/logstash/logstash:{{ ls_version }}
+    container_name: logstash2
+    volumes:
+      - ./logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./pipeline:/usr/share/logstash/pipeline
+      - ./certs:/etc/logstash/certs
+    ports:
+      - "5045:5044" # Expose on a different port for redundancy
+    environment:
+      LS_JAVA_OPTS: "-Xmx{{ ls_heap_size }} -Xms{{ ls_heap_size }}"
+      LOGSTASH_BEATS_SSL_ENABLED: "true"
+    networks:
+      - es_net
+    depends_on:
+      - elasticsearch1
+      - elasticsearch2
+      - elasticsearch3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
 
 networks:
   es_net:
