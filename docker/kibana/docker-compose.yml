@@ -6,6 +6,7 @@ services:
     container_name: kibana
     volumes:
       - ./kibana.yml:/usr/share/kibana/config/kibana.yml
+      - ./certs:/etc/kibana/certs
     ports:
       - "5601:5601"
     networks:
@@ -14,6 +15,14 @@ services:
       - elasticsearch1
       - elasticsearch2
       - elasticsearch3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
 
 networks:
   es_net:
