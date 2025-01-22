@@ -1,8 +1,8 @@
 ---
-vault_rcon_password: "your_strong_rcon_password"
-vault_haproxy_stats_password: "your_strong_haproxy_stats_password"
-vault_es_keystore_password: "your_strong_es_keystore_password"
-vault_logstash_password: "your_strong_logstash_password"
-vault_kibana_password: "your_strong_kibana_password"
-vault_restic_password: "your_strong_restic_password"
-vault_grafana_admin_password: "your_grafana_password"
+vault_rcon_password: "your_strong_rcon_password"  # Replace with a strong password and encrypt
+vault_haproxy_stats_password: "your_strong_haproxy_stats_password"  # Replace with a strong password and encrypt
+vault_es_keystore_password: "your_strong_es_keystore_password"  # Replace with a strong password and encrypt
+vault_logstash_password: "your_strong_logstash_password"  # Replace with a strong password and encrypt
+vault_kibana_password: "your_strong_kibana_password"  # Replace with a strong password and encrypt
+vault_restic_password: "your_strong_restic_password"  # Replace with a strong password and encrypt
+vault_es_admin_password: "your_elastic_admin_password"
