@@ -1,84 +1,82 @@
+name: Tests
 
- name: Tests
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
- on:
-   push:
-     branches: [ "main" ]
-   pull_request:
-     branches: [ "main" ]
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
- jobs:
-   trivy-scan:
-     runs-on: ubuntu-latest
-     steps:
-       - name: Checkout code
-         uses: actions/checkout@v3
+      - name: Build image
+        run: docker build -t michaelctrleng/minecraft-server-cluster:latest -f docker/minecraft_server/Dockerfile .
 
-       - name: Build image
-         run: docker build -t michaelctrleng/minecraft-server-cluster:latest -f docker/minecraft_server/Dockerfile .
+      - name: Trivy Scan - Image Vulnerability Scan
+        uses: aquasec/trivy-action@master
+        with:
+          image-ref: 'michaelctrleng/minecraft-server-cluster:latest'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          output: results.json
+          format: json
 
-       - name: Trivy Scan - Image Vulnerability Scan
-         uses: aquasec/trivy-action@master
-         with:
-           image-ref: 'michaelctrleng/minecraft-server-cluster:latest'
-           severity: 'CRITICAL,HIGH'
-           exit-code: '1'
-           output: results.json # Optional: Output scan results to a file
-           format: json      # Optional: Output format to JSON
+  ansible-syntax-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-   ansible-syntax-check:
-     runs-on: ubuntu-latest
-     steps:
-       - name: Checkout code
-         uses: actions/checkout@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
 
-       - name: Set up Python 3.9
-         uses: actions/setup-python@v4
-         with:
-           python-version: 3.9
+      - name: Install Ansible and Ansible-Lint
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible ansible-lint
 
-       - name: Install Ansible and Ansible-Lint
-         run: |
-           python -m pip install --upgrade pip
-           pip install ansible ansible-lint
+      - name: Ansible Lint Syntax Check
+        run: ansible-lint ansible/playbook.yml ansible/roles/*
 
-       - name: Ansible Lint Syntax Check
-         run: ansible-lint ansible/playbook.yml ansible/roles/*
+  ansible-role-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        role:
+          - common
+          - elasticsearch
+          - logstash
+          - kibana
+          - filebeat
+          - haproxy
+          - minecraft_server
+          - backup
+          - monitoring
 
-   ansible-role-test:
-     runs-on: ubuntu-latest
-     strategy:
-       matrix:
-         role:
-           - common
-           - elasticsearch
-           - logstash
-           - kibana
-           - filebeat
-           - haproxy
-           - minecraft_server
-           - backup
-           - monitoring
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-     steps:
-       - name: Checkout code
-         uses: actions/checkout@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
 
-       - name: Set up Python 3.9
-         uses: actions/setup-python@v4
-         with:
-           python-version: 3.9
+      - name: Install Molecule and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-molecule.txt
+          pip install docker
 
-       - name: Install Molecule and dependencies
-         run: |
-           python -m pip install --upgrade pip
-           pip install -r requirements-molecule.txt
-           pip install docker
-
-       - name: Run Molecule Test for Role ${{ matrix.role }}
-         run: molecule test -d docker --role ansible/roles/${{ matrix.role }} # Corrected -d flag
-         env:
-           PY_COLORS: '1'
-           ANSIBLE_FORCE_COLOR: '1'
-           TEST_HOST: docker
- ```
+      - name: Run Molecule Test for Role ${{ matrix.role }}
+        run: molecule test -d docker --role ansible/roles/${{ matrix.role }}
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          TEST_HOST: docker
