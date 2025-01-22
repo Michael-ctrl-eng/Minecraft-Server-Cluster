@@ -79,7 +79,7 @@ jobs:
           pip install docker
 
       - name: Run Molecule Test for Role ${{ matrix.role }}
-        run: molecule test -d docker -s default --role ansible/roles/${{ matrix.role }}
+        run: molecule test -s default
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
