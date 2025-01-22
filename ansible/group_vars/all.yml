@@ -1,0 +1,59 @@
+---
+# System Configuration
+timezone: "UTC"
+
+# Elasticsearch Variables
+es_version: "7.17.0"
+es_heap_size: "1g"
+es_data_dir: "/var/lib/elasticsearch"
+es_config_dir: "/etc/elasticsearch"
+es_network_host: "0.0.0.0"
+es_http_port: 9200
+es_security_enabled: false  # Set to true for production
+es_xpack_security_transport_ssl_enabled: false
+es_xpack_security_transport_ssl_verification_mode: "certificate"
+es_xpack_security_transport_ssl_keystore_path: "/path/to/your/keystore.p12"
+es_xpack_security_transport_ssl_truststore_path: "/path/to/your/truststore.p12"
+es_xpack_security_http_ssl_enabled: false
+es_xpack_security_http_ssl_keystore_path: "/path/to/your/keystore.p12"
+es_xpack_security_http_ssl_truststore_path: "/path/to/your/truststore.p12"
+
+# Logstash Variables
+ls_version: "7.17.0"
+ls_heap_size: "500m"
+ls_config_dir: "/etc/logstash"
+ls_pipeline_workers: 2
+
+# Kibana Variables
+kibana_version: "7.17.0"
+
+# Filebeat Variables
+filebeat_version: "7.17.0"
+
+# HAProxy Variables
+haproxy_stats_user: "admin"
+haproxy_stats_password: "your_strong_password" # Use Ansible Vault!
+haproxy_stats_port: 1936
+
+# Minecraft Server Variables
+minecraft_version: "1.19.4"
+minecraft_server_jar_url: "https://example.com/minecraft_server.{{ minecraft_version }}.jar" # Update with actual URL
+minecraft_server_type: "VANILLA" # Or PAPER, SPIGOT, etc.
+minecraft_server_directory: "/opt/minecraft"
+minecraft_user: "minecraft"
+minecraft_heap_size: "4G"
+minecraft_max_players: 20
+minecraft_motd: "A Minecraft Server Powered by Ansible and Docker"
+rcon_password: "your_strong_rcon_password" # Use Ansible Vault!
+online_mode: "true" # Set to false if you want to allow non-premium users
+
+# Backup Variables (using Restic)
+backup_enabled: true
+backup_location: "/mnt/backup/minecraft"  # Or s3://your-bucket-name
+restic_password: "your_strong_restic_password" # Use Ansible Vault!
+restic_repository: "{{ backup_location }}"
+
+# Monitoring Variables (Prometheus and Grafana)
+prometheus_version: "2.45.0"
+grafana_version: "9.5.2"
+node_exporter_version: "1.5.0"
