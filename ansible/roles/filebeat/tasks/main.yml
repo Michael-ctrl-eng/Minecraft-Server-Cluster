@@ -1,0 +1,34 @@
+---
+# ... (previous tasks)
+
+- name: Create Filebeat certs directory
+  file:
+    path: /etc/filebeat/certs
+    state: directory
+    owner: root
+    group: root
+    mode: 0750
+
+- name: Copy Filebeat certificate and key
+  copy:
+    src: "files/certs/{{ item }}"
+    dest: "/etc/filebeat/certs/{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  with_items:
+    - filebeat.crt
+    - filebeat.key
+    - ca.crt
+  no_log: true
+  when: filebeat_logstash_ssl_enabled | bool
+
+- name: Template Filebeat configuration (with security)
+  template:
+    src: filebeat.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart filebeat
+  when: filebeat_logstash_ssl_enabled | bool
