@@ -1,5 +1,11 @@
-# ... (other settings)
-
+server.name: "kibana"
+server.host: "0.0.0.0"
+elasticsearch.hosts: [
+  {% for host in groups['elasticsearch_servers'] -%}
+  "https://{{ hostvars[host].ansible_host }}:{{ es_http_port }}"
+  {% if not loop.last %},{% endif %}
+  {%- endfor %}
+]
 server.ssl.enabled: "{{ kibana_security_enabled }}"
 server.ssl.certificate: /etc/kibana/certs/kibana.crt
 server.ssl.key: /etc/kibana/certs/kibana.key
