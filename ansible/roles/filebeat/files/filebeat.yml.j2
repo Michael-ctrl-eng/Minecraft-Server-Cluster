@@ -1,4 +1,31 @@
-# ... (other settings)
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - "{{ minecraft_server_directory }}/docker/data/logs/*.log"
+  fields:
+    log_type: minecraft
+  fields_under_root: true
+  scan_frequency: 10s
+  
+- type: log
+  enabled: true
+  paths:
+    - /var/log/syslog
+    - /var/log/auth.log
+  fields:
+    log_type: syslog
+  fields_under_root: true
+  scan_frequency: 10s
+
+- type: log
+  enabled: true
+  paths:
+    - /var/log/haproxy*.log
+  fields:
+    log_type: haproxy
+  fields_under_root: true
+  scan_frequency: 10s
 
 output.logstash:
   hosts: [
@@ -8,6 +35,12 @@ output.logstash:
   {%- endfor %}
   ]
   ssl.enabled: "{{ filebeat_logstash_ssl_enabled }}"
-  ssl.certificate_authorities: ["/etc/filebeat/certs/ca.crt"]
-  ssl.certificate: "/etc/filebeat/certs/filebeat.crt"
+  ssl.certificate_authorities: ["/  ssl.certificate: "/etc/filebeat/certs/filebeat.crt"
   ssl.key: "/etc/filebeat/certs/filebeat.key"
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
