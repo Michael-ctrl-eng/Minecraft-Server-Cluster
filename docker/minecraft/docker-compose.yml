@@ -15,12 +15,14 @@ services:
       MAX_PLAYERS: "{{ minecraft_max_players }}"
       ONLINE_MODE: "{{ online_mode }}"
       JVM_OPTS: "-Xms{{ minecraft_heap_size }} -Xmx{{ minecraft_heap_size }}"
-      # Add other environment variables as needed
+      # ... other environment variables as needed
     volumes:
       - ./data:/data
       - ./config:/config
     restart: always
+    networks:
+      - mc_net  # Connect to the 'mc_net' network
 
-volumes:
-  data:
-  config:
+networks:
+  mc_net:  # Define the 'mc_net' network
+    driver: bridge
