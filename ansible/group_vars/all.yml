@@ -18,6 +18,7 @@ es_xpack_security_http_ssl_enabled: true
 es_xpack_security_http_ssl_keystore_path: "/etc/elasticsearch/certs/elasticsearch.p12"
 es_xpack_security_http_ssl_truststore_path: "/etc/elasticsearch/certs/elasticsearch.p12"
 es_keystore_password: "{{ vault_es_keystore_password }}"  # Encrypted with Ansible Vault
+es_admin_password: "{{ vault_es_admin_password }}"
 
 # Logstash Variables
 ls_version: "7.17.0"
