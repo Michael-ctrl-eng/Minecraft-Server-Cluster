@@ -1,0 +1,16 @@
+[Unit]
+Description=HAProxy Exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=haproxy_exporter
+Group=haproxy_exporter
+Type=simple
+ExecStart=/usr/local/bin/haproxy_exporter \
+ --haproxy.scrape-uri="http://localhost:{{ haproxy_stats_port }}/stats;csv"
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
