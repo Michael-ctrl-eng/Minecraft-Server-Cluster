@@ -1,0 +1,28 @@
+input {
+  beats {
+    port => 5044
+    client_inactivity_timeout => 300
+    ssl => "{{ logstash_beats_ssl_enabled }}"
+    ssl_certificate => "/etc/logstash/certs/logstash.crt"
+    ssl_key => "/etc/logstash/certs/logstash.key"
+    ssl_certificate_authorities => ["/etc/logstash/certs/ca.crt"]
+  }
+}
+
+# ... (rest of your Logstash configuration)
+
+output {
+  elasticsearch {
+    hosts => [
+      {% for host in groups['elasticsearch_servers'] -%}
+        "https://{{ hostvars[host].ansible_host }}:{{ es_http_port }}"
+        {% if not loop.last %},{% endif %}
+      {%- endfor %}
+    ]
+    index => "%{[@metadata][index]}"
+    ssl => true
+    cacert => '/etc/logstash/certs/ca.crt'
+    user => "logstash_internal"
+    password => "{{ logstash_password }}"
+  }
+}
