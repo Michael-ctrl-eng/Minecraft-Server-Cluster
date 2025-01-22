@@ -1,0 +1,4 @@
+http.host: "0.0.0.0"
+path.config: "{{ ls_config_dir }}/conf.d"
+pipeline.workers: "{{ ls_pipeline_workers }}"
+pipeline.batch.size: 125 # Optimize based on your environment
