@@ -30,6 +30,9 @@
     group: "{{ minecraft_user }}"
     mode: 0755
   register: download_result
+  retries: 3
+  delay: 5
+  until: download_result is succeeded
 
 - name: Copy EULA file
   copy:
