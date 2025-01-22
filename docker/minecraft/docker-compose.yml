@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+  minecraft-server:
+    image: itzg/minecraft-server:latest
+    container_name: minecraft-server
+    ports:
+      - "25565:25565"
+      - "25575:25575"
+    environment:
+      EULA: "TRUE"
+      TYPE: "{{ minecraft_server_type }}"
+      VERSION: "{{ minecraft_version }}"
+      MOTD: "{{ minecraft_motd }}"
+      MAX_PLAYERS: "{{ minecraft_max_players }}"
+      ONLINE_MODE: "{{ online_mode }}"
+      JVM_OPTS: "-Xms{{ minecraft_heap_size }} -Xmx{{ minecraft_heap_size }}"
+      # Add other environment variables as needed
+    volumes:
+      - ./data:/data
+      - ./config:/config
+    restart: always
+
+volumes:
+  data:
+  config:
