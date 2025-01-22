@@ -1,0 +1,7 @@
+-Xms{{ es_heap_size }}
+-Xmx{{ es_heap_size }}
+-XX:+UseG1GC
+-XX:MaxGCPauseMillis=200
+
+# GC logging options
+-Xlog:gc*,gc+age=trace,safepoint:file=/var/log/elasticsearch/gc.log:utctime,pid,tags:filecount=32,filesize=64m
