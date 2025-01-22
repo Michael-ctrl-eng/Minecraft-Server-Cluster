@@ -1,0 +1,11 @@
+apiVersion: autoscaling/v2  
+kind: HorizontalPodAutoscaler  
+spec:  
+  metrics:  
+  - type: Pods  
+    pods:  
+      metric:  
+        name: minecraft_players_online  
+      target:  
+        type: AverageValue  
+        averageValue: 15  
