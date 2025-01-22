@@ -30,6 +30,26 @@
     group: "{{ minecraft_user }}"
     mode: 0755
 
+- name: Assert that Minecraft server port is within valid range
+  assert:
+    that:
+      - minecraft_server_port | int > 0
+      - minecraft_server_port | int < 65536
+    fail_msg: "Invalid minecraft_server_port value: {{ minecraft_server_port }}"
+
+- name: Assert that RCON port is within valid range
+  assert:
+    that:
+      - rcon_port | int > 0
+      - rcon_port | int < 65536
+    fail_msg: "Invalid rcon_port value: {{ rcon_port }}"
+
+- name: Assert that Minecraft heap size is valid
+  assert:
+    that:
+      - minecraft_heap_size is match('[1-9]+[0-9]*[M|G]')
+    fail_msg: "Invalid minecraft_heap_size value: {{ minecraft_heap_size }}"
+
 - name: Template Minecraft Docker Compose
   template:
     src: docker-compose.yml.j2
