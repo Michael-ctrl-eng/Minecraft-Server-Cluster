@@ -24,6 +24,29 @@
     - "{{ ls_config_dir }}"
     - /var/log/logstash
 
+- name: Create Logstash certs directory
+  file:
+    path: /etc/logstash/certs
+    state: directory
+    owner: logstash
+    group: logstash
+    mode: 0750
+  when: logstash_beats_ssl_enabled | bool
+
+- name: Copy Logstash certificate and key
+  copy:
+    src: "files/certs/{{ item }}"
+    dest: "/etc/logstash/certs/{{ item }}"
+    owner: logstash
+    group: logstash
+    mode: 0600
+  with_items:
+    - logstash.crt
+    - logstash.key
+    - ca.crt
+  no_log: true
+  when: logstash_beats_ssl_enabled | bool
+
 - name: Download Logstash Debian package
   get_url:
     url: "https://artifacts.elastic.co/downloads/logstash/logstash-{{ ls_version }}-amd64.deb"
