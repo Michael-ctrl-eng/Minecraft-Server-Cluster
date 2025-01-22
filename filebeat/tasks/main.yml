@@ -1,8 +1,28 @@
 ---
-- name: Download Filebeat Debian package
-  get_url:
-    url: "https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-{{ filebeat_version }}-amd64.deb"
-    dest: "/tmp/filebeat-{{ filebeat_version }}-amd64.deb"
+- name: Create Filebeat certs directory
+  file:
+    path: /etc/filebeat/certs
+    state: directory
+    owner: root
+    group: root
+    mode: 0750
+  when: filebeat_logstash_ssl_enabled | bool
+
+- name: Copy Filebeat certificate and key
+  copy:
+    src: "files/certs/{{ item }}"
+    dest: "/etc/filebeat/certs/{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  with_items:
+    - filebeat.crt
+    - filebeat.key
+    - ca.crt
+  no_log: true
+  when: filebeat_logstash_ssl_enabled | bool
+
+- name: Download Filebeat Debian package    dest: "/tmp/filebeat-{{ filebeat_version }}-amd64.deb"
     mode: 0644
 
 - name: Install Filebeat Debian package
@@ -10,7 +30,7 @@
     deb: "/tmp/filebeat-{{ filebeat_version }}-amd64.deb"
     state: present
 
-- name: Template Filebeat configuration
+- name: Template Filebeat configuration (with security)
   template:
     src: filebeat.yml.j2
     dest: /etc/filebeat/filebeat.yml
@@ -31,3 +51,5 @@
     state: started
 
 - meta: flush_handlers
+  get_url:
+    url: "https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-{{ filebeat_version }}-amd64.deb
