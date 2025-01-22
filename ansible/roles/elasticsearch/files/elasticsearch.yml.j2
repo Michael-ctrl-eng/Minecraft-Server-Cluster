@@ -1,5 +1,21 @@
-# ... (other settings)
-
+cluster.name: "es-minecraft-cluster"
+node.name: "{{ inventory_hostname }}"
+path.data: "{{ es_data_dir }}"
+path.logs: "/var/log/elasticsearch"
+network.host: "{{ es_network_host }}"
+http.port: "{{ es_http_port }}"
+discovery.seed_hosts: >-
+  {% for host in groups['elasticsearch_servers'] -%}
+    {% if host != inventory_hostname -%}
+      "{{ hostvars[host].ansible_host }}"
+      {% if not loop.last %},{% endif %}
+    {%- endif -%}
+  {%- endfor %}
+cluster.initial_master_nodes: >-
+  {% for host in groups['elasticsearch_servers'] -%}
+    "{{ host }}"
+    {% if not loop.last %},{% endif %}
+  {%- endfor %}
 xpack.security.enabled: "{{ es_security_enabled }}"
 xpack.security.transport.ssl.enabled: "{{ es_xpack_security_transport_ssl_enabled }}"
 xpack.security.transport.ssl.verification_mode: "{{ es_xpack_security_transport_ssl_verification_mode }}"
