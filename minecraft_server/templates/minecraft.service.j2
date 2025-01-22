@@ -1,0 +1,15 @@
+[Unit]
+Description=Minecraft Server
+After=network.target
+
+[Service]
+WorkingDirectory={{ minecraft_server_directory }}
+User={{ minecraft_user }}
+Group={{ minecraft_user }}
+Restart=on-failure
+RestartSec=5s
+ExecStart=/usr/bin/java -Xmx{{ minecraft_heap_size }} -Xms{{ minecraft_heap_size }} -jar server.jar nogui
+ExecStop=/usr/bin/rcon-cli -a {{ ansible_host }}:25575 -p {{ rcon_password }} stop
+
+[Install]
+WantedBy=multi-user.target
