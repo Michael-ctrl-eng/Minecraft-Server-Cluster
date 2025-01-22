@@ -1,148 +1,150 @@
-# Minecraft Server Cluster
+Minecraft Server Cluster on Kubernetes & Docker
+A production-grade, auto-scaling Minecraft cluster with monitoring, backups, and security best practices.
 
-This project deploys a highly available, scalable, and secure Minecraft Server cluster using Docker, Ansible, Elasticsearch, Logstash, Kibana, Prometheus, Grafana, and HAProxy.
+Architecture Diagram Example Architecture: Kubernetes + Prometheus + Nginx
 
-## Architecture
+⭐ Features
+Auto-Scaling: Dynamically scale servers based on real-time player count.
 
+Zero Downtime: Load balancing via Nginx (Docker) or Kubernetes Ingress (Kubernetes).
 
-## Prerequisites
+Persistent Worlds: Automated backups to cloud storage (AWS S3, GCP Buckets).
 
-*   **Servers:**  You will need several servers (at least 7 recommended for a highly available setup) with Ubuntu 20.04 or later installed.
-*   **Ansible:** Ansible must be installed on your control machine (the machine from which you will run the Ansible playbooks).
-*   **SSH Access:** You need SSH access to all servers with a user that has sudo privileges.
-*   **Docker and Docker Compose:** Docker and Docker Compose should be preinstalled on all servers that will run Docker containers
-*   **Certificates (for TLS):**  You will need to generate or obtain TLS certificates for Elasticsearch, Logstash, Kibana, and Filebeat.
+Monitoring: Preconfigured dashboards (Grafana) for server health, player activity, and JVM metrics.
 
-## Deployment
+Security: RBAC, encrypted secrets, and network policies.
 
-1. **Clone the repository:**
+Multi-Cloud Ready: Deploy on AWS EKS, Google GKE, or local (Minikube).
 
-    ```bash
-    git clone https://github.com/Michael-ctrl-eng/Minecraft-Server-Cluster.git
-    cd Minecraft-Server-Cluster
-    ```
+🚀 Quick Start
+Prerequisites
+Docker & Docker Compose (for local testing)
 
-2. **Install Ansible roles (if any):**
+Kubernetes Cluster (e.g., Minikube, EKS, GKE)
 
-    ```bash
-    ansible-galaxy install -r requirements.yml
-    ```
+kubectl and helm installed
 
-3. **Configure Ansible:**
-    *   Update `ansible/inventory.ini` with the IP addresses of your servers.
-    *   Configure `ansible/group_vars/all.yml` with your desired settings (passwords, versions, etc.). **Use Ansible Vault to encrypt sensitive data.**
-    *   Place your generated TLS certificates in the appropriate `files/certs` directories within each role.
+1. Local Deployment (Docker Compose)
+bash
+Copy
+git clone https://github.com/Michael-ctrl-eng/Minecraft-Server-Cluster.git  
+cd Minecraft-Server-Cluster  
 
-4. **Run the Ansible playbook:**
+# Start 2 servers + Nginx load balancer + Prometheus  
+docker-compose up -d --scale minecraft=2  
+Access Servers: localhost:25565 (load balanced across 2 instances).
 
-    ```bash
-    ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
-    ```
+2. Production Deployment (Kubernetes)
+bash
+Copy
+# Deploy the cluster  
+kubectl apply -f k8s/  
 
-## Configuration
+# Deploy monitoring stack (Prometheus + Grafana)  
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  
+helm install minecraft-monitoring prometheus-community/kube-prometheus-stack -f k8s/monitoring/values.yaml  
+Access Grafana Dashboard:
 
-### Elasticsearch
+bash
+Copy
+kubectl port-forward svc/minecraft-monitoring-grafana 3000:80  
+# Open http://localhost:3000 (admin/password)  
+🔧 Configuration
+Environment Variables (Docker/Kubernetes)
+Variable	Description	Default
+EULA	Accept Minecraft EULA	TRUE
+MEMORY	JVM Heap Size	2G
+PLAYERS_MAX	Max players per server	20
+BACKUP_INTERVAL	Cloud backup interval (minutes)	30
+Example (Kubernetes Deployment):
 
-*   **`es_version`:** The version of Elasticsearch to install.
-*   **`es_heap_size`:** The JVM heap size for Elasticsearch.
-*   **`es_data_dir`:** The directory where Elasticsearch will store its data.
-*   **`es_security_enabled`:** Set to `true` to enable security features (TLS and authentication).
-*   **`es_xpack_security_...`:**  Variables for configuring TLS. Provide paths to your keystores and truststores.
-*   **`es_keystore_password`:**  The password for your Elasticsearch keystore (encrypted with Ansible Vault).
+yaml
+Copy
+env:  
+- name: MEMORY  
+  value: "4G"  
+- name: BACKUP_INTERVAL  
+  value: "15"  
+Auto-Scaling
+The cluster scales based on player count using Prometheus metrics and the Horizontal Pod Autoscaler (HPA):
 
-### Logstash
+Metrics Collection: A sidecar container in each Minecraft pod scrapes player count from server logs.
 
-*   **`ls_version`:** The version of Logstash to install.
-*   **`ls_heap_size`:** The JVM heap size for Logstash.
-*   **`logstash_beats_ssl_enabled`:** Set to `true` to enable TLS for the Beats input.
-*   **`logstash_password`:** The password for the `logstash_internal` user (encrypted with Ansible Vault).
+Prometheus Adapter: Translates custom metrics (players_active) for HPA.
 
-### Kibana
+Scaling Rule: Scale up if players_active > 15 per server for 5 minutes.
 
-*   **`kibana_version`:** The version of Kibana to install.
-*   **`kibana_security_enabled`:** Set to `true` to enable TLS.
-*   **`kibana_password`:** The password for the `kibana_user` (encrypted with Ansible Vault).
+HPA Manifest:
 
-### Filebeat
+yaml
+Copy
+apiVersion: autoscaling/v2  
+kind: HorizontalPodAutoscaler  
+metadata:  
+  name: minecraft-hpa  
+spec:  
+  scaleTargetRef:  
+    apiVersion: apps/v1  
+    kind: Deployment  
+    name: minecraft  
+  minReplicas: 1  
+  maxReplicas: 10  
+  metrics:  
+  - type: Pods  
+    pods:  
+      metric:  
+        name: players_active  
+      target:  
+        type: AverageValue  
+        averageValue: 15  
+🔒 Security Best Practices
+Network Policies: Restrict pod-to-pod traffic (see k8s/security/network-policies.yaml).
 
-*   **`filebeat_version`:** The version of Filebeat to install.
-*   **`filebeat_logstash_ssl_enabled`:** Set to `true` to enable TLS for communication with Logstash.
+RBAC: Least-privilege service accounts for Prometheus and backups.
 
-### HAProxy
+Secrets Management: Use Kubernetes Secrets or external vaults (e.g., AWS Secrets Manager).
 
-*   **`haproxy_stats_user`:** The username for accessing HAProxy stats.
-*   **`haproxy_stats_password`:** The password for accessing HAProxy stats (encrypted with Ansible Vault).
-*   **`haproxy_stats_port`:** The port for the HAProxy stats page.
+Image Security: Scan Docker images with Trivy (make scan).
 
-### Keepalived 
+🗄️ Backup & Restore
+Automated Backups:
 
-*   **`keepalived_virtual_ip`:** The virtual IP address for HAProxy failover.
-*   **`keepalived_interface`:** The network interface to use for Keepalived.
+CronJob backs up world data to S3/GCP every 30 minutes.
 
-### Minecraft Server
+Enable in k8s/backups/backup-job.yaml:
 
-*   **`minecraft_version`:** The version of the Minecraft server to install.
-*   **`minecraft_server_jar_url`:** The download URL for the Minecraft server JAR.
-*   **`minecraft_server_type`:** The type of Minecraft server (VANILLA, SPIGOT, PAPER, etc.).
-*   **`minecraft_server_directory`:** The directory where the Minecraft server will be installed.
-*   **`minecraft_user`:** The user that will run the Minecraft server.
-*   **`minecraft_heap_size`:** The JVM heap size for the Minecraft server.
-*   **`minecraft_max_players`:** The maximum number of players allowed on the server.
-*   **`minecraft_motd`:** The message of the day.
-*   **`rcon_password`:** The password for RCON access (encrypted with Ansible Vault).
-*   **`online_mode`:** Set to `true` to enable online mode (authentication with Mojang servers).
+yaml
+Copy
+- name: BACKUP_ENABLED  
+  value: "true"  
+- name: AWS_BUCKET  
+  value: "s3://your-bucket"  
+Restore a Snapshot:
 
-### Backup
+bash
+Copy
+kubectl exec -it <minecraft-pod> -- /scripts/restore.sh s3://your-bucket/world-2023-10-01.tar.gz  
+📊 Monitoring & Logging
+Preconfigured Dashboards:
 
-*   **`backup_enabled`:** Set to `true` to enable backups.
-*   **`backup_location`:** The location where backups will be stored (local directory or S3 bucket).
-*   **`restic_password`:** The password for the Restic repository (encrypted with Ansible Vault).
+Grafana: Player activity, memory usage, and server latency.
 
-### Monitoring
+Alerts: Slack/Discord notifications for high CPU or low disk space.
 
-*   **`prometheus_version`:** The version of Prometheus to install.
-*   **`grafana_version`:** The version of Grafana to install.
-*   **`node_exporter_version`:** The version of Node Exporter to install.
-*   **`grafana_admin_password`:** The initial admin password for Grafana (encrypted with Ansible Vault).
+Grafana Dashboard
 
-## Operation
+Log Aggregation:
 
-*   **Starting/Stopping Services:**  Use the `systemctl` command to manage services (e.g., `systemctl start elasticsearch`, `systemctl stop minecraft`).
-*   **Monitoring:** Access Grafana at `http://<monitoring_server_ip>:3000` to view dashboards and monitor the cluster.
-*   **Logs:** Access Kibana at `http://<kibana_server_ip>:5601` to view and analyze logs.
-*   **HAProxy Stats:** Access the HAProxy stats page at `http://<haproxy_server_ip>:1936`.
+bash
+Copy
+# Deploy Loki + Promtail for logs  
+helm install loki grafana/loki-stack --values k8s/monitoring/loki-values.yaml  
+🤝 Contributing
+Fork the repo.
 
-## Security
+Test changes with make test (requires Terratest).
 
-*   **TLS:**  TLS encryption is enabled for communication between Elasticsearch, Logstash, Kibana, and Filebeat.
-*   **Authentication:** User authentication is enforced for Elasticsearch and Kibana.
-*   **Firewall:**  A firewall (UFW) is configured to restrict access to only necessary ports.
-*   **Secrets Management:** Ansible Vault is used to encrypt sensitive data.
+Submit a PR with updated docs and tests.
 
-## Backup and Restore
-
-*   Backups are automatically performed using `restic` and scheduled with `cron`.
-*   The backup script is located at `{{ minecraft_server_directory }}/backup.sh`.
-*   The restore script is located at `{{ minecraft_server_directory }}/restore.sh`.
-
-## Troubleshooting
-
-*   **Logs:** Check the logs of each service for errors:
-    *   Elasticsearch: `/var/log/elasticsearch`
-    *   Logstash: `/var/log/logstash`
-    *   Kibana: `/var/log/kibana`
-    *   Minecraft: `{{ minecraft_server_directory }}/logs`
-    *   Filebeat: `/var/log/filebeat`
-    *   HAProxy: `/var/log/haproxy.log`
-    *   Prometheus: `/var/log/prometheus`
-    *   Grafana: `/var/log/grafana`
-*   **systemd:** Use `systemctl status <service>` to check the status of a service.
-*   **Journalctl:** Use `journalctl -u <service>` to view the systemd journal for a service.
-
-## Upgrading
-
-*   To upgrade a component, update the corresponding version variable in `group_vars/all.yml` and re-run the Ansible playbook with the appropriate tag (e.g., `ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --tags elasticsearch`).
-
-## License
-
-[MIT]
+📜 License
+Apache 2.0 - See LICENSE.
