@@ -53,8 +53,8 @@
   template:
     src: prometheus.service.j2
     dest: /etc/systemd/system/prometheus.service
-    owner
-        group: root
+    owner: root
+    group: root
     mode: 0644
   notify:
     - reload systemd
@@ -167,6 +167,58 @@
 - name: Start Node Exporter service
   systemd:
     name: node_exporter
+    state: started
+
+- name: Create HAProxy Exporter group
+  group:
+    name: haproxy_exporter
+    state: present
+    system: yes
+
+- name: Create HAProxy Exporter user
+  user:
+    name: haproxy_exporter
+    group: haproxy_exporter
+    create_home: no
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Download HAProxy Exporter
+  unarchive:
+    src: "https://github.com/prometheus/haproxy_exporter/releases/download/v{{ haproxy_exporter_version }}/haproxy_exporter-{{ haproxy_exporter_version }}.linux-amd64.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+    creates: "/tmp/haproxy_exporter-{{ haproxy_exporter_version }}.linux-amd64"
+
+- name: Copy HAProxy Exporter binary
+  copy:
+    src: "/tmp/haproxy_exporter-{{ haproxy_exporter_version }}.linux-amd64/haproxy_exporter"
+    dest: "/usr/local/bin/haproxy_exporter"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create HAProxy Exporter service file
+  template:
+    src: haproxy_exporter.service.j2
+    dest: /etc/systemd/system/haproxy_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload systemd
+    - restart haproxy_exporter
+
+- name: Enable HAProxy Exporter service
+  systemd:
+    name: haproxy_exporter
+    enabled: yes
+    masked: no
+
+- name: Start HAProxy Exporter service
+  systemd:
+    name: haproxy_exporter
     state: started
 
 - meta: flush_handlers
