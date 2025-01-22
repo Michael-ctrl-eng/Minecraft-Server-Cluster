@@ -1,0 +1,10 @@
+name: Image Scan  
+on: [push]  
+jobs:  
+  trivy-scan:  
+    runs-on: ubuntu-latest  
+    steps:  
+    - name: Scan image  
+      run: |  
+        docker pull itzg/minecraft-server  
+        trivy image --exit-code 1 --severity HIGH,CRITICAL itzg/minecraft-server  
