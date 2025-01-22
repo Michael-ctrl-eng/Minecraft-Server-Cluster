@@ -1,28 +1,19 @@
 # Minecraft Server Cluster
 
-## Description
+This project deploys a highly available, scalable, and secure Minecraft Server cluster using Docker, Ansible, Elasticsearch, Logstash, Kibana, Prometheus, Grafana, and HAProxy.
 
-This project implements a scalable Minecraft server network architecture designed for high-traffic environments. It aims to provide a robust and automated solution for managing multiple Minecraft servers, dynamically scaling resources based on player demand. The architecture leverages AWS for infrastructure (though the current implementation does not have full AWS integration), Redis for caching and server management, and BungeeCord for load balancing (future implementation).
+## Architecture
 
-**Note:** This project is currently in early development. While basic scaling functionality with Redis is implemented, full AWS integration and BungeeCord load balancing are planned for future development.
 
-## Features
+## Prerequisites
 
-*   **Automated Scaling:** Dynamically scales the number of Minecraft servers up or down based on demand (currently using Redis to track the desired number of servers).
-*   **Redis Integration:** Uses Redis for caching and storing server scaling information.
-*   **Centralized Server Management:** Provides functions to start, stop, and get the status of servers (currently a basic implementation).
-*   **CI/CD Pipeline:** Includes a GitHub Actions workflow for automated testing.
-*   **Planned:** Integration with AWS Auto Scaling for dynamic infrastructure provisioning.
-*   **Planned:** BungeeCord load balancing to distribute players across multiple servers.
+*   **Servers:**  You will need several servers (at least 7 recommended for a highly available setup) with Ubuntu 20.04 or later installed.
+*   **Ansible:** Ansible must be installed on your control machine (the machine from which you will run the Ansible playbooks).
+*   **SSH Access:** You need SSH access to all servers with a user that has sudo privileges.
+*   **Docker and Docker Compose:** Docker and Docker Compose should be preinstalled on all servers that will run Docker containers
+*   **Certificates (for TLS):**  You will need to generate or obtain TLS certificates for Elasticsearch, Logstash, Kibana, and Filebeat.
 
-## Dependencies
-
-*   Python 3.10
-*   `pytest` (for testing)
-*   `redis` (for interacting with Redis)
-*   `mock` (for mocking in tests)
-
-## Installation
+## Deployment
 
 1. **Clone the repository:**
 
@@ -31,67 +22,127 @@ This project implements a scalable Minecraft server network architecture designe
     cd Minecraft-Server-Cluster
     ```
 
-2. **Install dependencies:**
+2. **Install Ansible roles (if any):**
 
     ```bash
-    pip install -r requirements.txt
+    ansible-galaxy install -r requirements.yml
     ```
 
-3. **Set up a Redis Instance**
-    *   You will need a running Redis instance for the project to work.
-    *   You can run Redis locally, use a cloud provider's managed Redis service, or run it in a Docker container. For example, using Docker:
-        ```bash
-        docker run --name my-redis -p 6379:6379 -d redis
-        ```
-    * Ensure you know your Redis instance's host and port (default is `localhost:6379`).
+3. **Configure Ansible:**
+    *   Update `ansible/inventory.ini` with the IP addresses of your servers.
+    *   Configure `ansible/group_vars/all.yml` with your desired settings (passwords, versions, etc.). **Use Ansible Vault to encrypt sensitive data.**
+    *   Place your generated TLS certificates in the appropriate `files/certs` directories within each role.
 
-## Usage
-
-**Environment Variables:**
-
-The project currently uses the following environment variables to configure the Redis connection:
-
-*   `REDIS_HOST`: The hostname or IP address of your Redis instance (default: `localhost`).
-*   `REDIS_PORT`: The port number of your Redis instance (default: `6379`).
-
-You can set these environment variables in your shell before running the application or in your GitHub Actions workflow (as you have already done).
-
-**Running Locally (Basic Example):**
-
-While there is no main script to run the full application yet, you can interact with the `scaling.py` and `server_manager.py` modules directly in a Python shell to test the basic functionality:
-
-1. **Start a Python shell:**
+4. **Run the Ansible playbook:**
 
     ```bash
-    python
+    ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
     ```
 
-2. **Import the modules and functions:**
+## Configuration
 
-    ```python
-    from src.cluster_manager.scaling import scale_servers, get_servers_to_scale
-    from src.cluster_manager.server_manager import start_server, stop_server, get_server_status
-    ```
+### Elasticsearch
 
-3. **Experiment with the functions:**
+*   **`es_version`:** The version of Elasticsearch to install.
+*   **`es_heap_size`:** The JVM heap size for Elasticsearch.
+*   **`es_data_dir`:** The directory where Elasticsearch will store its data.
+*   **`es_security_enabled`:** Set to `true` to enable security features (TLS and authentication).
+*   **`es_xpack_security_...`:**  Variables for configuring TLS. Provide paths to your keystores and truststores.
+*   **`es_keystore_password`:**  The password for your Elasticsearch keystore (encrypted with Ansible Vault).
 
-    ```python
-    >>> scale_servers(5)  # Scale up by 5 servers
-    >>> get_servers_to_scale()
-    5
-    >>> scale_servers(-2) # Scale down by 2 servers
-    >>> get_servers_to_scale()
-    3
-    >>> start_server(1)  # Start server with ID 1 (basic implementation)
-    >>> get_server_status(1) # Check server status (basic implementation)
-    >>> stop_server(1)   # Stop server with ID 1 (basic implementation)
-    ```
+### Logstash
 
-**Note:** The `start_server`, `stop_server`, and `get_server_status` functions currently have very basic placeholder implementations. They don't actually start or stop real Minecraft servers yet.
+*   **`ls_version`:** The version of Logstash to install.
+*   **`ls_heap_size`:** The JVM heap size for Logstash.
+*   **`logstash_beats_ssl_enabled`:** Set to `true` to enable TLS for the Beats input.
+*   **`logstash_password`:** The password for the `logstash_internal` user (encrypted with Ansible Vault).
 
-## Testing
+### Kibana
 
-To run the tests, use the following command from the root directory of the project:
+*   **`kibana_version`:** The version of Kibana to install.
+*   **`kibana_security_enabled`:** Set to `true` to enable TLS.
+*   **`kibana_password`:** The password for the `kibana_user` (encrypted with Ansible Vault).
 
-```bash
-pytest tests/ -v
+### Filebeat
+
+*   **`filebeat_version`:** The version of Filebeat to install.
+*   **`filebeat_logstash_ssl_enabled`:** Set to `true` to enable TLS for communication with Logstash.
+
+### HAProxy
+
+*   **`haproxy_stats_user`:** The username for accessing HAProxy stats.
+*   **`haproxy_stats_password`:** The password for accessing HAProxy stats (encrypted with Ansible Vault).
+*   **`haproxy_stats_port`:** The port for the HAProxy stats page.
+
+### Keepalived 
+
+*   **`keepalived_virtual_ip`:** The virtual IP address for HAProxy failover.
+*   **`keepalived_interface`:** The network interface to use for Keepalived.
+
+### Minecraft Server
+
+*   **`minecraft_version`:** The version of the Minecraft server to install.
+*   **`minecraft_server_jar_url`:** The download URL for the Minecraft server JAR.
+*   **`minecraft_server_type`:** The type of Minecraft server (VANILLA, SPIGOT, PAPER, etc.).
+*   **`minecraft_server_directory`:** The directory where the Minecraft server will be installed.
+*   **`minecraft_user`:** The user that will run the Minecraft server.
+*   **`minecraft_heap_size`:** The JVM heap size for the Minecraft server.
+*   **`minecraft_max_players`:** The maximum number of players allowed on the server.
+*   **`minecraft_motd`:** The message of the day.
+*   **`rcon_password`:** The password for RCON access (encrypted with Ansible Vault).
+*   **`online_mode`:** Set to `true` to enable online mode (authentication with Mojang servers).
+
+### Backup
+
+*   **`backup_enabled`:** Set to `true` to enable backups.
+*   **`backup_location`:** The location where backups will be stored (local directory or S3 bucket).
+*   **`restic_password`:** The password for the Restic repository (encrypted with Ansible Vault).
+
+### Monitoring
+
+*   **`prometheus_version`:** The version of Prometheus to install.
+*   **`grafana_version`:** The version of Grafana to install.
+*   **`node_exporter_version`:** The version of Node Exporter to install.
+*   **`grafana_admin_password`:** The initial admin password for Grafana (encrypted with Ansible Vault).
+
+## Operation
+
+*   **Starting/Stopping Services:**  Use the `systemctl` command to manage services (e.g., `systemctl start elasticsearch`, `systemctl stop minecraft`).
+*   **Monitoring:** Access Grafana at `http://<monitoring_server_ip>:3000` to view dashboards and monitor the cluster.
+*   **Logs:** Access Kibana at `http://<kibana_server_ip>:5601` to view and analyze logs.
+*   **HAProxy Stats:** Access the HAProxy stats page at `http://<haproxy_server_ip>:1936`.
+
+## Security
+
+*   **TLS:**  TLS encryption is enabled for communication between Elasticsearch, Logstash, Kibana, and Filebeat.
+*   **Authentication:** User authentication is enforced for Elasticsearch and Kibana.
+*   **Firewall:**  A firewall (UFW) is configured to restrict access to only necessary ports.
+*   **Secrets Management:** Ansible Vault is used to encrypt sensitive data.
+
+## Backup and Restore
+
+*   Backups are automatically performed using `restic` and scheduled with `cron`.
+*   The backup script is located at `{{ minecraft_server_directory }}/backup.sh`.
+*   The restore script is located at `{{ minecraft_server_directory }}/restore.sh`.
+
+## Troubleshooting
+
+*   **Logs:** Check the logs of each service for errors:
+    *   Elasticsearch: `/var/log/elasticsearch`
+    *   Logstash: `/var/log/logstash`
+    *   Kibana: `/var/log/kibana`
+    *   Minecraft: `{{ minecraft_server_directory }}/logs`
+    *   Filebeat: `/var/log/filebeat`
+    *   HAProxy: `/var/log/haproxy.log`
+    *   Prometheus: `/var/log/prometheus`
+    *   Grafana: `/var/log/grafana`
+*   **systemd:** Use `systemctl status <service>` to check the status of a service.
+*   **Journalctl:** Use `journalctl -u <service>` to view the systemd journal for a service.
+
+## Upgrading
+
+*   To upgrade a component, update the corresponding version variable in `group_vars/all.yml` and re-run the Ansible playbook with the appropriate tag (e.g., `ansible-playbook -i ansible/inventory.ini ansible/playbook.yml --tags elasticsearch`).
+
+## License
+
+[MIT]
