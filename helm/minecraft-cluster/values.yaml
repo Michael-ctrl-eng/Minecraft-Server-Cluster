@@ -1,0 +1,62 @@
+# Global settings
+global:
+  namespace: minecraft
+  clusterName: my-minecraft-cluster
+
+# Enable/disable components
+elasticsearch:
+  enabled: true
+logstash:
+  enabled: true
+kibana:
+  enabled: true
+filebeat:
+  enabled: true
+haproxy:
+  enabled: true
+minecraft:
+  enabled: true
+prometheus:
+  enabled: true
+grafana:
+  enabled: true
+alertmanager:
+  enabled: false # Change to true if you are using Alertmanager
+
+# Minecraft server settings
+minecraft:
+  server:
+    replicaCount: 2
+    image:
+      repository: itzg/minecraft-server
+      tag: latest
+    eula: "TRUE"
+    type: "VANILLA" # Or PAPER, SPIGOT, etc.
+    version: "1.19.4" # Specify desired version
+    motd: "A Minecraft Server Powered by Kubernetes"
+    maxPlayers: 50
+    onlineMode: "true"
+    rcon:
+      enabled: true
+      port: 25575
+      password: "your_rcon_password" # Use a strong password! Consider Kubernetes Secrets
+    jvm:
+      heapSize: "4G"
+
+# ... (other settings for Elasticsearch, Logstash, Kibana, etc. - refer to their respective Helm chart documentation)
+
+# Persistence (example - adapt to your storage class and requirements)
+persistence:
+  enabled: true
+  storageClass: "standard" # Or your preferred storage class
+  accessMode: ReadWriteOnce
+  size: 10Gi
+
+# Resource limits and requests (tune as needed)
+resources:
+  limits:
+    cpu: 2000m
+    memory: 8Gi
+  requests:
+    cpu: 1000m
+    memory: 4Gi
