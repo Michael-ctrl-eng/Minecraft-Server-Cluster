@@ -84,4 +84,4 @@ Backups: Manual script only—no automated cloud backups or CronJobs.
 Tests: No automated validation for scaling/backups.
 
 📜 License
-MIT License. See LICENSE.
+MIT License.
