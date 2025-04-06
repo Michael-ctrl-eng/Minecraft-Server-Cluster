@@ -1,7 +1,7 @@
 # Security Policy  
 
 ## Reporting Vulnerabilities  
-Email `security@example.com` for critical issues.  
+Email `michael.makram.zm@gmail.com` for critical issues.  
 
 ## Supported Versions  
 | Version | Supported          |  
