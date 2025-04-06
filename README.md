@@ -1,87 +1,101 @@
-Minecraft Server Cluster
-Deploy Minecraft servers with Docker Compose or Kubernetes. Supports basic scaling, backups, and monitoring.
+MINECRAFT SERVER CLUSTER
 
-Docker+Kubernetes
+A flexible and modern setup to run Minecraft servers using Docker Compose or Kubernetes. It supports scaling, manual backups, and performance monitoring.
 
-📦 Features
-Docker Compose Setup: Spin up Minecraft servers, Nginx load balancer, and Prometheus/Grafana locally.
+Features
+Docker Compose (Local Development):
 
-Kubernetes Deployment: Deploy servers to a cluster with Horizontal Pod Autoscaling (HPA) based on CPU usage.
+Run Minecraft servers locally with Nginx as a load balancer.
 
-Basic Backups: Manual world data backup script (backup.sh).
+Built-in Prometheus and Grafana for monitoring.
 
-Monitoring: Prometheus and Grafana included in Docker Compose for metrics.
+Kubernetes (Production Ready):
 
-🚀 Quick Start
-Prerequisites
+Deploy Minecraft servers to a Kubernetes cluster.
+
+Horizontal Pod Autoscaler (HPA) adjusts the number of servers based on CPU usage.
+
+Backups:
+
+Manual backup script included to save world data.
+
+Monitoring:
+
+Prometheus collects metrics.
+
+Grafana provides a pre-configured dashboard.
+
+Quick Start
+Requirements
 Docker & Docker Compose
 
-Kubernetes cluster (e.g., Minikube, EKS)
+A Kubernetes cluster (e.g., Minikube, EKS)
 
 kubectl
 
-1. Local Deployment (Docker Compose)
+Local Deployment (Docker Compose)
 bash
 Copy
-git clone https://github.com/Michael-ctrl-eng/Minecraft-Server-Cluster.git  
-cd Minecraft-Server-Cluster  
+Edit
+git clone https://github.com/Michael-ctrl-eng/Minecraft-Server-Cluster.git
+cd Minecraft-Server-Cluster
+docker-compose up -d
+Minecraft: localhost:25565
 
-# Start 1 Minecraft server + Nginx + Prometheus/Grafana  
-docker-compose up -d  
-Access Minecraft: localhost:25565
+Grafana: localhost:3000 (default login: admin/admin)
 
-Grafana Dashboard: localhost:3000 (default: admin/admin)
-
-2. Kubernetes Deployment
+Kubernetes Deployment
 bash
 Copy
-kubectl apply -f k8s/  
-Auto-Scaling: Servers scale based on CPU usage (default: scales at 50% CPU).
+Edit
+kubectl apply -f k8s/
+Auto-scaling is handled via HPA and triggered by CPU usage. Example config:
 
 yaml
 Copy
-# k8s/hpa.yaml  
-metrics:  
-- type: Resource  
-  resource:  
-    name: cpu  
-    target:  
-      type: Utilization  
-      averageUtilization: 50  
-🔧 Configuration
-Environment Variables
+Edit
+metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+Configuration
 Variable	Description	Default
 EULA	Accept Minecraft EULA	TRUE
-MEMORY	JVM heap size (per server)	2G
+MEMORY	JVM heap size per server	2G
 SERVER_PORT	Minecraft server port	25565
-Override in Docker Compose:
+You can override variables in docker-compose.yml:
 
 yaml
 Copy
-# docker-compose.yml  
-environment:  
-  - MEMORY=4G  
-🗄️ Backups
-Manually run the backup script to save world data:
+Edit
+environment:
+  MEMORY: 4G
+Backups
+To save the current world state, run:
 
 bash
 Copy
-./backup.sh  
-Backups are stored in backups/.
+Edit
+./backup.sh
+Backups are saved in the backups/ directory.
 
-📊 Monitoring
-Prometheus scrapes server metrics (port 9090).
+Monitoring
+Prometheus scrapes server metrics on port 9090.
 
-Grafana comes preconfigured with a basic dashboard (port 3000).
+Grafana dashboard available on port 3000.
 
-⚠️ Limitations
-Autoscaling: Currently scales on CPU usage, not player count.
+Limitations
+Autoscaling is based on CPU usage, not number of players.
 
-Security: No RBAC, network policies, or encrypted secrets.
+No built-in security (RBAC, network policies, or encrypted secrets).
 
-Backups: Manual script only—no automated cloud backups or CronJobs.
+Backup process is manual only.
 
-Tests: No automated validation for scaling/backups.
+No automated tests for scaling or backup validation.
 
-📜 License
+License
 MIT License.
+
